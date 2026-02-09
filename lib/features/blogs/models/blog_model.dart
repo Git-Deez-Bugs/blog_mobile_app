@@ -1,21 +1,21 @@
 class Blog {
-  final String id;
-  final String authorId;
-  final String title;
+  final String? id;
+  final String? authorId;
+  final String? title;
   final String? content;
   final String? imagePath;
   final String? signedUrl;
-  final DateTime createdAt;
+  final DateTime? createdAt;
 
   // joined / computed fields
   final String? authorEmail;
   final int? commentsCount;
 
   Blog({
-    required this.id,
-    required this.authorId,
-    required this.title,
-    required this.createdAt,
+    this.id,
+    this.authorId,
+    this.title,
+    this.createdAt,
     this.content,
     this.imagePath,
     this.signedUrl,
@@ -25,7 +25,7 @@ class Blog {
 
   factory Blog.fromMap(
     Map<String, dynamic> map,
-    Map<String, String> signedUrls,
+    {String? signedUrl}
   ) {
     final imagePath = map['blog_image_path'];
 
@@ -42,7 +42,7 @@ class Blog {
       commentsCount: (map['comments'] as List).isNotEmpty
           ? map['comments'][0]['count'] as int
           : 0,
-      signedUrl: imagePath != null ? signedUrls[imagePath] : null,
+      signedUrl: signedUrl,
     );
   }
 }

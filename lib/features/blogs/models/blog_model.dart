@@ -1,15 +1,18 @@
+import 'package:blog_app_v1/features/blogs/models/comment_model.dart';
+
 class Blog {
   final String? id;
   final String? authorId;
   final String? title;
   final String? content;
-  final String? imagePath;
-  final String? signedUrl;
+  String? imagePath;
   final DateTime? createdAt;
 
   // joined / computed fields
   final String? authorEmail;
   final int? commentsCount;
+  final List<Comment>? comments;
+  final String? signedUrl;
 
   Blog({
     this.id,
@@ -21,12 +24,14 @@ class Blog {
     this.signedUrl,
     this.authorEmail,
     this.commentsCount,
+    this.comments,
   });
 
   factory Blog.fromMap(
-    Map<String, dynamic> map,
-    {String? signedUrl}
-  ) {
+    Map<String, dynamic> map, {
+    String? signedUrl,
+    List<Comment>? comments,
+  }) {
     final imagePath = map['blog_image_path'];
 
     return Blog(
@@ -39,9 +44,15 @@ class Blog {
 
       //Extended Fields
       authorEmail: map['users']?['user_email'],
-      commentsCount: (map['comments'] as List).isNotEmpty
-          ? map['comments'][0]['count'] as int
+      commentsCount:
+          (map['comments'] is List && (map['comments'] as List).isNotEmpty)
+          ? ((map['comments'][0] is Map &&
+                    (map['comments'][0] as Map).containsKey('count'))
+                ? (map['comments'][0]['count'] as int? ?? 0)
+                : (map['comments'] as List).length)
           : 0,
+
+      comments: comments,
       signedUrl: signedUrl,
     );
   }

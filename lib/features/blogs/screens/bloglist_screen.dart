@@ -1,10 +1,9 @@
 import 'package:blog_app_v1/components/blog_card.dart';
 import 'package:blog_app_v1/components/loading_spinner.dart';
 import 'package:blog_app_v1/features/blogs/models/blog_model.dart';
-import 'package:blog_app_v1/features/blogs/screens/create_blog_screen.dart';
+import 'package:blog_app_v1/features/blogs/screens/create_update_blog_screen.dart';
 import 'package:blog_app_v1/features/blogs/services/blogs_service.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 class BloglistScreen extends StatelessWidget {
   const BloglistScreen({super.key});
@@ -44,13 +43,11 @@ class BloglistScreen extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => CreateBlogScreen(),
+                            builder: (context) => CreateUpdateBlogScreen(),
                           ),
                         );
                       },
-                      borderRadius: BorderRadius.circular(
-                        30,
-                      ),
+                      borderRadius: BorderRadius.circular(30),
                       child: Padding(
                         padding: const EdgeInsets.all(15),
                         child: Row(
@@ -69,21 +66,7 @@ class BloglistScreen extends StatelessWidget {
 
               final blog = blogs[index - 1];
 
-              final formattedDate = DateFormat(
-                'MMM d, yyyy',
-              ).format(blog.createdAt!);
-              print('blog: $index - ${blog.signedUrl}');
-
-              return BlogCard(
-                id: blog.id!,
-                author: blog.authorEmail,
-                createdAt: formattedDate,
-                title: blog.title!,
-                textContent: blog.content,
-                imageContent: blog.signedUrl,
-                imagePath: blog.imagePath,
-                commentsCount: blog.commentsCount,
-              );
+              return BlogCard(blog: blog, disablePush: false,);
             },
           );
         },

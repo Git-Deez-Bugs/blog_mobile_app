@@ -1,16 +1,43 @@
+import 'package:blog_app_v1/components/loading_spinner.dart';
 import 'package:blog_app_v1/components/navigation_bar.dart';
 import 'package:blog_app_v1/core/constants.dart';
 import 'package:blog_app_v1/core/notifiers.dart';
-import 'package:blog_app_v1/features/auth/screens/profile_screen.dart';
+import 'package:blog_app_v1/features/profile/model/user_model.dart';
+import 'package:blog_app_v1/features/profile/screens/profile_screen.dart';
 import 'package:blog_app_v1/features/auth/services/auth_service.dart';
 import 'package:blog_app_v1/features/blogs/screens/bloglist_screen.dart';
+import 'package:blog_app_v1/features/profile/services/profile_service.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-List<Widget> pages = [BloglistScreen(), ProfileScreen()];
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+
+  User? currentUser;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchCurrentUser();
+  }
+
+  Future<void> fetchCurrentUser() async {
+    AuthService authService = AuthService();
+    final String? userId = authService.getCurrentUser()?.id;
+    if (userId == null) return;
+    ProfileService profileService = ProfileService();
+    final user = await profileService.getUser(userId);
+    setState(() {
+      currentUser = user;
+    });
+  }
 
   void darkMode() async {
     isDarkModeNotifier.value = !isDarkModeNotifier.value;
@@ -20,6 +47,15 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
+    if (currentUser == null) {
+      return Scaffold(
+        body: LoadingSpinner(),
+      );
+    }
+
+    final List<Widget> pages = [BloglistScreen(), ProfileScreen(currentUser: currentUser!,)];
+
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(

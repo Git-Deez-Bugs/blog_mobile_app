@@ -10,15 +10,29 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SingleChildScrollView(
-        child: Center(
-          child: Column(
-            children: [
-              CircleAvatar(
-                backgroundImage: currentUser.signedUrl != null ? NetworkImage(currentUser.signedUrl!) : AssetImage('assets/images/user.png'),
-              ),
-              if (currentUser.name != null) Text(currentUser.name!),
-              Text(currentUser.email),
-            ],
+        child: Padding(
+          padding: EdgeInsets.all(20),
+          child: Center(
+            child: Column(
+              children: [
+                CircleAvatar(
+                  backgroundImage: currentUser.signedUrl != null ? NetworkImage(currentUser.signedUrl!) : AssetImage('assets/images/user.png'),
+                  radius: 50,
+                ),
+                SizedBox(height: 20,),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    IconButton(onPressed: () {
+                      
+                    }, icon: Icon(Icons.edit)),
+                    Text(currentUser.name ?? 'anon user', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),),
+                    SizedBox(width: 50,),
+                  ],
+                ),
+                Text(currentUser.email, style: TextStyle(color: Colors.blueAccent),),
+              ],
+            ),
           ),
         ),
       ),

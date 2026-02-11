@@ -66,13 +66,13 @@ class BlogsService {
     final String? signedUrl = data['blog_image_path'] != null
         ? await getImage(data['blog_image_path'])
         : null;
-    
+
     final comments = (data['comments'] as List<dynamic>);
     final commentImagePaths = comments
         .map((comment) => comment['comment_image_path'])
         .whereType<String>()
         .toList();
-    
+
     final Map<String, String> commentSignedUrls = {};
 
     if (commentImagePaths.isNotEmpty) {
@@ -86,11 +86,15 @@ class BlogsService {
     final commentModels = comments.map((comment) {
       final commentImagePath = comment['comment_image_path'];
 
-      return Comment.fromMap(comment, signedUrl: commentImagePath != null ? commentSignedUrls[commentImagePath] : null);
+      return Comment.fromMap(
+        comment,
+        signedUrl: commentImagePath != null
+            ? commentSignedUrls[commentImagePath]
+            : null,
+      );
     }).toList();
 
     return Blog.fromMap(data, signedUrl: signedUrl, comments: commentModels);
-
   }
 
   //Update Blog

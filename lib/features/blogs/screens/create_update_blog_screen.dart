@@ -83,6 +83,7 @@ class _CreateBlogScreenState extends State<CreateUpdateBlogScreen> {
         id: blogId,
         title: _titleController.text,
         content: _contentController.text,
+        imagePath: oldImagePath
       );
       if (_removedImage) {
         blog.imagePath = null;

@@ -9,10 +9,11 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 class BlogCard extends StatelessWidget {
-  const BlogCard({super.key, required this.blog, required this.disablePush});
+  const BlogCard({super.key, required this.blog, required this.disablePush, required this.onChanged});
 
   final Blog blog;
   final bool disablePush;
+  final VoidCallback onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -43,7 +44,7 @@ class BlogCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          blog.authorEmail!,
+                          blog.authorEmail ?? 'Anon',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 15,
@@ -58,18 +59,20 @@ class BlogCard extends StatelessWidget {
                   ),
                   if (AuthService().getCurrentUser()?.id == blog.authorId)
                     MoreOptions(
-                      onUpdate: () {
-                        Navigator.push(
+                      onUpdate: () async {
+                        await Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (context) =>
                                 CreateUpdateBlogScreen(blog: blog),
                           ),
                         );
+                        onChanged.call();
                       },
                       onDelete: () async {
                         BlogsService blogsService = BlogsService();
                         await blogsService.deleteBlog(blog);
+                        onChanged.call();
                       },
                     ),
                 ],

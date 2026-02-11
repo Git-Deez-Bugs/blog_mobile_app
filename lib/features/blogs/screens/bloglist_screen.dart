@@ -5,14 +5,33 @@ import 'package:blog_app_v1/features/blogs/screens/create_update_blog_screen.dar
 import 'package:blog_app_v1/features/blogs/services/blogs_service.dart';
 import 'package:flutter/material.dart';
 
-class BloglistScreen extends StatelessWidget {
+class BloglistScreen extends StatefulWidget {
   const BloglistScreen({super.key});
+
+  @override
+  State<BloglistScreen> createState() => _BloglistScreenState();
+}
+
+class _BloglistScreenState extends State<BloglistScreen> {
+  Future<List<Blog>>? blogs;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchBlogs();
+  }
+
+  void fetchBlogs() {
+    BlogsService blogService = BlogsService();
+    blogs = blogService.readBlogs(); 
+    setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: FutureBuilder<List<Blog>>(
-        future: BlogsService().readBlogs(),
+        future: blogs,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const LoadingSpinner();
@@ -39,13 +58,14 @@ class BloglistScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(30),
                     ),
                     child: InkWell(
-                      onTap: () {
-                        Navigator.push(
+                      onTap: () async {
+                        await Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (context) => CreateUpdateBlogScreen(),
                           ),
                         );
+                        fetchBlogs();
                       },
                       borderRadius: BorderRadius.circular(30),
                       child: Padding(
@@ -66,7 +86,7 @@ class BloglistScreen extends StatelessWidget {
 
               final blog = blogs[index - 1];
 
-              return BlogCard(blog: blog, disablePush: false,);
+              return BlogCard(blog: blog, disablePush: false, onChanged: fetchBlogs,);
             },
           );
         },

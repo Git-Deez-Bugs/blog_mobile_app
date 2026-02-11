@@ -47,7 +47,7 @@ class _BlogScreenState extends State<BlogScreen> {
 
         return Scaffold(
           appBar: AppBar(),
-          body: SingleChildScrollView(child: BlogCard(blog: blog, disablePush: true,)),
+          body: SingleChildScrollView(child: BlogCard(blog: blog, disablePush: true, onChanged: fetchBlog,)),
         );
       },
     );

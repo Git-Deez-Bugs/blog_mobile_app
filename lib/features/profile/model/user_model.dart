@@ -3,7 +3,7 @@ class User {
   final String email;
   final DateTime createdAt;
   final String? name;
-  final String? profilePath;
+  String? profilePath;
 
   final String? signedUrl;
 

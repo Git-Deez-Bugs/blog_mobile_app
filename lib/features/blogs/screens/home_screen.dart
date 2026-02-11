@@ -10,7 +10,6 @@ import 'package:blog_app_v1/features/profile/services/profile_service.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -19,26 +18,6 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-
-  User? currentUser;
-
-  @override
-  void initState() {
-    super.initState();
-    fetchCurrentUser();
-  }
-
-  Future<void> fetchCurrentUser() async {
-    AuthService authService = AuthService();
-    final String? userId = authService.getCurrentUser()?.id;
-    if (userId == null) return;
-    ProfileService profileService = ProfileService();
-    final user = await profileService.getUser(userId);
-    setState(() {
-      currentUser = user;
-    });
-  }
-
   void darkMode() async {
     isDarkModeNotifier.value = !isDarkModeNotifier.value;
     final SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -47,67 +26,84 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    AuthService authService = AuthService();
+    final String? userId = authService.getCurrentUser()?.id;
+    ProfileService profileService = ProfileService();
 
-    if (currentUser == null) {
-      return Scaffold(
-        body: LoadingSpinner(),
-      );
+    if (userId == null) {
+      return Scaffold(body: Text('Anauthorized User'));
     }
 
-    final List<Widget> pages = [BloglistScreen(), ProfileScreen(currentUser: currentUser!,)];
+    return StreamBuilder<User?>(
+      stream: profileService.streamUser(userId),
+      builder: (context, userSnapshot) {
+        if (userSnapshot.connectionState == ConnectionState.waiting) {
+          return Scaffold(body: LoadingSpinner());
+        }
 
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          onPressed: darkMode,
-          icon: ValueListenableBuilder(
-            valueListenable: isDarkModeNotifier,
-            builder: (context, isDarkMode, child) {
-              return Icon(isDarkMode ? Icons.light_mode : Icons.dark_mode);
-            },
-          ),
-        ),
-        title: Text("Blog App"),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (context) {
-                  return AlertDialog(
-                    title: Text("Sign Out"),
-                    content: Text("Are you sure you want to sign out?"),
-                    actions: [
-                      ElevatedButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        child: Text("Cancel"),
-                      ),
-                      FilledButton(onPressed: () async {
-                        isSignInNotifier.value = true;
-                        selectedPageNotifier.value = 0;
-                        AuthService authService = AuthService();
-                        Navigator.pop(context);
-                        await authService.signOut();
-                      }, child: Text("Sign Out")),
-                    ],
+        final currentUser = userSnapshot.data!;
+        final List<Widget> pages = [
+          BloglistScreen(),
+          ProfileScreen(currentUser: currentUser),
+        ];
+
+        return Scaffold(
+          appBar: AppBar(
+            leading: IconButton(
+              onPressed: darkMode,
+              icon: ValueListenableBuilder(
+                valueListenable: isDarkModeNotifier,
+                builder: (context, isDarkMode, child) {
+                  return Icon(isDarkMode ? Icons.light_mode : Icons.dark_mode);
+                },
+              ),
+            ),
+            title: Text("Blog App"),
+            centerTitle: true,
+            actions: [
+              IconButton(
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) {
+                      return AlertDialog(
+                        title: Text("Sign Out"),
+                        content: Text("Are you sure you want to sign out?"),
+                        actions: [
+                          ElevatedButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                            child: Text("Cancel"),
+                          ),
+                          FilledButton(
+                            onPressed: () async {
+                              isSignInNotifier.value = true;
+                              selectedPageNotifier.value = 0;
+                              AuthService authService = AuthService();
+                              Navigator.pop(context);
+                              await authService.signOut();
+                            },
+                            child: Text("Sign Out"),
+                          ),
+                        ],
+                      );
+                    },
                   );
                 },
-              );
-            },
-            icon: Icon(Icons.logout),
+                icon: Icon(Icons.logout),
+              ),
+            ],
           ),
-        ],
-      ),
-      body: ValueListenableBuilder(
-        valueListenable: selectedPageNotifier,
-        builder: (context, selectedPage, child) {
-          return pages.elementAt(selectedPage);
-        },
-      ),
-      bottomNavigationBar: NavBar(),
+          body: ValueListenableBuilder(
+            valueListenable: selectedPageNotifier,
+            builder: (context, selectedPage, child) {
+              return pages.elementAt(selectedPage);
+            },
+          ),
+          bottomNavigationBar: NavBar(),
+        );
+      },
     );
   }
 }

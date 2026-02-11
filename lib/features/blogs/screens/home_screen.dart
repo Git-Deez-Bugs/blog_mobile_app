@@ -48,50 +48,94 @@ class _HomeScreenState extends State<HomeScreen> {
         ];
 
         return Scaffold(
-          appBar: AppBar(
-            leading: IconButton(
-              onPressed: darkMode,
-              icon: ValueListenableBuilder(
-                valueListenable: isDarkModeNotifier,
-                builder: (context, isDarkMode, child) {
-                  return Icon(isDarkMode ? Icons.light_mode : Icons.dark_mode);
-                },
-              ),
+          drawer: Drawer(
+            child: ListView(
+              padding: const EdgeInsets.all(10),
+              children: [
+                DrawerHeader(child: Text('More')),
+                ListTile(
+                  onTap: darkMode,
+                  title: Row(
+                    children: [
+                      ValueListenableBuilder(
+                        valueListenable: isDarkModeNotifier,
+                        builder: (context, value, child) {
+                          return Text(
+                            isDarkModeNotifier.value == true
+                                ? 'Dark Mode'
+                                : 'Light Mode',
+                          );
+                        },
+                      ),
+                      SizedBox(width: 10),
+                      ValueListenableBuilder(
+                        valueListenable: isDarkModeNotifier,
+                        builder: (context, isDarkMode, child) {
+                          return Icon(
+                            isDarkMode ? Icons.light_mode : Icons.dark_mode,
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                ListTile(
+                  onTap: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) {
+                        return AlertDialog(
+                          title: Text("Sign Out"),
+                          content: Text("Are you sure you want to sign out?"),
+                          actions: [
+                            ElevatedButton(
+                              onPressed: () {
+                                Navigator.pop(context);
+                              },
+                              child: Text("Cancel"),
+                            ),
+                            FilledButton(
+                              onPressed: () async {
+                                isSignInNotifier.value = true;
+                                selectedPageNotifier.value = 0;
+                                AuthService authService = AuthService();
+                                Navigator.pop(context);
+                                await authService.signOut();
+                              },
+                              child: Text("Sign Out"),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  },
+                  title: Row(
+                    children: [
+                      Text('Sign Out'),
+                      SizedBox(width: 10),
+                      Icon(Icons.logout),
+                    ],
+                  ),
+                ),
+              ],
             ),
+          ),
+          appBar: AppBar(
             title: Text("Blog App"),
             centerTitle: true,
             actions: [
-              IconButton(
-                onPressed: () {
-                  showDialog(
-                    context: context,
-                    builder: (context) {
-                      return AlertDialog(
-                        title: Text("Sign Out"),
-                        content: Text("Are you sure you want to sign out?"),
-                        actions: [
-                          ElevatedButton(
-                            onPressed: () {
-                              Navigator.pop(context);
-                            },
-                            child: Text("Cancel"),
-                          ),
-                          FilledButton(
-                            onPressed: () async {
-                              isSignInNotifier.value = true;
-                              selectedPageNotifier.value = 0;
-                              AuthService authService = AuthService();
-                              Navigator.pop(context);
-                              await authService.signOut();
-                            },
-                            child: Text("Sign Out"),
-                          ),
-                        ],
-                      );
-                    },
-                  );
-                },
-                icon: Icon(Icons.logout),
+              Padding(
+                padding: const EdgeInsets.all(15.0),
+                child: InkResponse(
+                  radius: 10,
+                  onTap: () => selectedPageNotifier.value = 1,
+                  child: CircleAvatar(
+                    backgroundImage: currentUser.signedUrl != null
+                        ? NetworkImage(currentUser.signedUrl!)
+                        : AssetImage('assets/images/user.png'),
+                    radius: 15,
+                  ),
+                ),
               ),
             ],
           ),

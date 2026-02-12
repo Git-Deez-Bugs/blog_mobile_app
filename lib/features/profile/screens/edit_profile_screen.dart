@@ -48,12 +48,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         id: widget.currentUser.id,
         email: widget.currentUser.email,
         createdAt: widget.currentUser.createdAt,
+        name: widget.currentUser.name
       );
       if ((_oldImagePath != null && _networkImageUrl == null) && _imageFile == null) {
         user.profilePath = null;
       }
       await profileService.updateProfile(
-        user: user,
+        user: user.toMap(),
         file: _imageFile,
         fileName: _fileName,
         oldImagePath: _oldImagePath,

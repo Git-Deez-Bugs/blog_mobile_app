@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'package:blog_app_v1/components/loading_spinner.dart';
+import 'package:blog_app_v1/features/auth/services/auth_service.dart';
 import 'package:blog_app_v1/features/blogs/models/blog_model.dart';
 import 'package:blog_app_v1/features/blogs/services/blogs_service.dart';
 import 'package:flutter/material.dart';
@@ -23,6 +25,7 @@ class _CreateBlogScreenState extends State<CreateUpdateBlogScreen> {
   String? oldImagePath;
   String? blogId;
   bool _removedImage = false;
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -56,49 +59,103 @@ class _CreateBlogScreenState extends State<CreateUpdateBlogScreen> {
   }
 
   void createBlog() async {
+    if (_titleController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Title field is required"),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
     try {
+      final currentUser = AuthService().getCurrentUser();
+      if (currentUser == null) {
+        throw Exception("User not logged in");
+      }
       BlogsService blogsService = BlogsService();
+
       Blog blog = Blog(
+        id: '',
+        authorId: currentUser.id,
         title: _titleController.text,
         content: _contentController.text,
       );
-      await blogsService.createBlog(blog, _imageFile, fileName);
+
+      await blogsService.createBlog(blog.toMap(), _imageFile, fileName);
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text("Blog created successfully")));
       Navigator.pop(context);
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("Failed to create blog")));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Failed to create blog: ${error.toString()}"),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
       }
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
   void updateBlog() async {
+    if (_titleController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Title field is required"),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
     try {
       BlogsService blogsService = BlogsService();
       Blog blog = Blog(
-        id: blogId,
+        id: blogId!,
+        authorId: widget.blog!.authorId,
         title: _titleController.text,
         content: _contentController.text,
-        imagePath: oldImagePath
+        imagePath: oldImagePath,
       );
       if (_removedImage) {
         blog.imagePath = null;
       }
-      await blogsService.updateBlog(blog, _imageFile, fileName, oldImagePath);
+      await blogsService.updateBlog(
+        blog.toMap(includeId: true),
+        _imageFile,
+        fileName,
+        oldImagePath,
+      );
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text("Blog updated successfully")));
       Navigator.pop(context);
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("Failed to update blog")));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Failed to update blog: ${error.toString()}"),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
       }
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
@@ -116,101 +173,109 @@ class _CreateBlogScreenState extends State<CreateUpdateBlogScreen> {
         title: Text(widget.blog != null ? "Update Blog" : "Create Blog"),
         centerTitle: true,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: SingleChildScrollView(
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text("Title"),
-                SizedBox(height: 10),
-                TextFormField(
-                  controller: _titleController,
-                  decoration: InputDecoration(
-                    hintText: "Enter title",
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return "Title field is required";
-                    }
-                    return null;
-                  },
-                ),
-                SizedBox(height: 10),
-                Text("Content"),
-                SizedBox(height: 10),
-                TextFormField(
-                  controller: _contentController,
-                  maxLines: 10,
-                  decoration: InputDecoration(
-                    hintText: "Enter content",
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                ),
-                if (_imageFile != null || _networkImageUrl != null) ...[
-                  const SizedBox(height: 10),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(14),
-                    child: Stack(
-                      children: [
-                        _imageFile != null
-                            ? Image.file(_imageFile!)
-                            : Image.network(
-                                _networkImageUrl!,
-                                errorBuilder: (context, error, stackTrace) =>
-                                    const Text('Failed to load image'),
-                              ),
+      body: _isLoading
+          ? LoadingSpinner()
+          : Padding(
+              padding: const EdgeInsets.all(20),
+              child: SingleChildScrollView(
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text("Title"),
+                      SizedBox(height: 10),
+                      TextFormField(
+                        controller: _titleController,
+                        decoration: InputDecoration(
+                          hintText: "Enter title",
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return "Title field is required";
+                          }
+                          return null;
+                        },
+                      ),
+                      SizedBox(height: 10),
+                      Text("Content"),
+                      SizedBox(height: 10),
+                      TextFormField(
+                        controller: _contentController,
+                        maxLines: 10,
+                        decoration: InputDecoration(
+                          hintText: "Enter content",
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                      ),
+                      if (_imageFile != null || _networkImageUrl != null) ...[
+                        const SizedBox(height: 10),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(14),
+                          child: Stack(
+                            children: [
+                              _imageFile != null
+                                  ? Image.file(_imageFile!)
+                                  : Image.network(
+                                      _networkImageUrl!,
+                                      errorBuilder:
+                                          (context, error, stackTrace) =>
+                                              const Text(
+                                                'Failed to load image',
+                                              ),
+                                    ),
 
-                        Positioned(
-                          top: 6,
-                          right: 6,
-                          child: InkWell(
-                            onTap: () {
-                              setState(() {
-                                _imageFile = null;
-                                _networkImageUrl = null;
-                                fileName = null;
-                                _removedImage = true;
-                              });
-                            },
-                            child: IconButtonTheme(
-                              data: IconButtonThemeData(),
-                              child: Icon(Icons.cancel),
-                            ),
+                              Positioned(
+                                top: 6,
+                                right: 6,
+                                child: InkWell(
+                                  onTap: () {
+                                    setState(() {
+                                      _imageFile = null;
+                                      _networkImageUrl = null;
+                                      fileName = null;
+                                      _removedImage = true;
+                                    });
+                                  },
+                                  child: IconButtonTheme(
+                                    data: IconButtonThemeData(),
+                                    child: Icon(Icons.cancel),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
-                    ),
+                      IconButton(
+                        onPressed: pickImage,
+                        icon: Icon(Icons.add_a_photo),
+                      ),
+                      FilledButton(
+                        onPressed: () {
+                          if (_formKey.currentState!.validate()) {
+                            if (widget.blog != null) {
+                              updateBlog();
+                            } else {
+                              createBlog();
+                            }
+                          }
+                        },
+                        style: FilledButton.styleFrom(
+                          minimumSize: Size(double.infinity, 40),
+                        ),
+                        child: Text(widget.blog != null ? "Update" : "Create"),
+                      ),
+                    ],
                   ),
-                ],
-                IconButton(onPressed: pickImage, icon: Icon(Icons.add_a_photo)),
-                FilledButton(
-                  onPressed: () {
-                    if (_formKey.currentState!.validate()) {
-                      if (widget.blog != null) {
-                        updateBlog();
-                      } else {
-                        createBlog();
-                      }
-                    }
-                  },
-                  style: FilledButton.styleFrom(
-                    minimumSize: Size(double.infinity, 40),
-                  ),
-                  child: Text(widget.blog != null ? "Update" : "Create"),
                 ),
-              ],
+              ),
             ),
-          ),
-        ),
-      ),
     );
   }
 }

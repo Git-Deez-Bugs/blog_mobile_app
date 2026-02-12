@@ -16,15 +16,23 @@ class User {
     this.signedUrl,
   });
 
-  factory User.fromMap(Map<String, dynamic> map, {String? signedUrl}) {
+  factory User.fromMap({ required Map<String, dynamic> user, String? signedUrl}) {
     return User(
-      id: map['user_id'],
-      email: map['user_email'],
-      createdAt: DateTime.parse(map['user_created_at']),
-      name: map['user_name'],
-      profilePath: map['user_profile_path'],
+      id: user['user_id'],
+      email: user['user_email'],
+      createdAt: DateTime.parse(user['user_created_at']),
+      name: user['user_name'],
+      profilePath: user['user_profile_path'],
 
       signedUrl: signedUrl
     );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'user_id': id,
+      'user_name': name,
+      'user_profile_path': profilePath
+    };
   }
 }

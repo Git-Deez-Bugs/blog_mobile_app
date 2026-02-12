@@ -3,10 +3,11 @@ import 'package:blog_app_v1/features/profile/model/user_model.dart';
 class Comment {
   final String id;
   final String blogId;
-  final User author;
+  final String authorId;
+  final User? author;
   final String? textContent;
-  final String? imagePath;
-  final DateTime createdAt;
+  String? imagePath;
+  final DateTime? createdAt;
 
   final String? authorEmail;
   final String? signedUrl;
@@ -14,10 +15,11 @@ class Comment {
   Comment({
     required this.id,
     required this.blogId,
-    required this.author,
+    required this.authorId,
+    this.author,
     this.textContent,
     this.imagePath,
-    required this.createdAt,
+    this.createdAt,
     this.authorEmail,
     this.signedUrl,
   });
@@ -26,6 +28,7 @@ class Comment {
     return Comment(
       id: comment['comment_id']?.toString() ?? '',
       blogId: comment['comment_blog_id']?.toString() ?? '',
+      authorId: comment['comment_author_id'],
       author: author,
       textContent: comment['comment_text_content'] as String?,
       imagePath: comment['comment_image_path'] as String?,
@@ -35,5 +38,18 @@ class Comment {
       authorEmail: comment['users']?['user_email'],
       signedUrl: signedUrl,
     );
+  }
+
+  Map<String, dynamic> toMap({ bool includeId = false}) {
+    final map = {
+      'comment_blog_id': blogId,
+      'comment_author_id': authorId,
+      'comment_text_content': textContent,
+      'comment_image_path': imagePath,
+    };
+    if (includeId) {
+      map['comment_id'] = id;
+    }
+    return map;
   }
 }

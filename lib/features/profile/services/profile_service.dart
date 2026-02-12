@@ -21,7 +21,7 @@ class ProfileService {
         ? await blogsService.getImage(data['user_profile_path'])
         : null;
 
-    return User.fromMap(data, signedUrl: signedUrl);
+    return User.fromMap(user: data, signedUrl: signedUrl);
   }
 
   //Get Current User Using Stream
@@ -38,21 +38,21 @@ class ProfileService {
               ? await blogsService.getImage(user['user_profile_path'])
               : null;
 
-          return User.fromMap(user, signedUrl: signedUrl);
+          return User.fromMap(user: user, signedUrl: signedUrl);
         });
   }
 
   //Update User Name
-  Future<void> updateName(User user) async {
+  Future<void> updateName({required Map<String, dynamic> user}) async {
     await supabase
         .from('users')
-        .update({'user_name': user.name})
-        .eq('user_id', user.id);
+        .update(user)
+        .eq('user_id', user['user_id']);
   }
 
   //Update User Profile
   Future<void> updateProfile({
-    required User user,
+    required Map<String, dynamic> user,
     File? file,
     String? fileName,
     oldImagePath,
@@ -61,14 +61,15 @@ class ProfileService {
 
     if (file != null && fileName != null) {
       imagePath = await blogsService.uploadImage(file, fileName);
+      user['user_profile_path'] = imagePath;
     }
 
     await supabase
         .from('users')
-        .update({'user_profile_path': imagePath ?? user.profilePath})
-        .eq('user_id', user.id);
+        .update(user)
+        .eq('user_id', user['user_id']);
 
-    if ((oldImagePath != null && user.profilePath == null) ||
+    if ((oldImagePath != null && user['user_profile_path'] == null) ||
         (oldImagePath != null && imagePath != null)) {
       await blogsService.deleteImage(oldImagePath);
     }

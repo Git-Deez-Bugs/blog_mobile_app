@@ -33,9 +33,10 @@ class _EditNameScreenState extends State<EditNameScreen> {
         id: widget.currentUser.id,
         email: widget.currentUser.email,
         createdAt: widget.currentUser.createdAt,
-        name: _nameController.text
+        name: _nameController.text,
+        profilePath: widget.currentUser.profilePath
       );
-      await profileService.updateName(user);
+      await profileService.updateName(user: user.toMap());
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Name updated successfully')),
       );

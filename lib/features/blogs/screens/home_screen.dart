@@ -52,7 +52,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: ListView(
               padding: const EdgeInsets.all(10),
               children: [
-                DrawerHeader(child: Text('More')),
+                SizedBox(height: 110, child: DrawerHeader(child: Text('More', style: TextStyle(fontWeight: FontWeight.w900),))),
                 ListTile(
                   onTap: darkMode,
                   title: Row(

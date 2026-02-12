@@ -27,6 +27,7 @@ class BlogCard extends StatefulWidget {
 
 class _BlogCardState extends State<BlogCard> {
   bool toComment = false;
+  String? commentToEdit;
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +38,7 @@ class _BlogCardState extends State<BlogCard> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => BlogScreen(blogId: widget.blog.id!),
+                builder: (context) => BlogScreen(blogId: widget.blog.id, onChanged: () => widget.onChanged.call(),),
               ),
             );
           }
@@ -60,12 +61,14 @@ class _BlogCardState extends State<BlogCard> {
                               ? NetworkImage(widget.blog.author!.signedUrl!)
                               : AssetImage('assets/images/user.png'),
                         ),
-                        SizedBox(width: 10,),
+                        SizedBox(width: 10),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              (widget.blog.author?.name ?? widget.blog.author?.email ?? 'Unknown Author'),
+                              (widget.blog.author?.name ??
+                                  widget.blog.author?.email ??
+                                  'Unknown Author'),
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 15,
@@ -97,7 +100,9 @@ class _BlogCardState extends State<BlogCard> {
                       },
                       onDelete: () async {
                         BlogsService blogsService = BlogsService();
-                        await blogsService.deleteBlog(widget.blog);
+                        await blogsService.deleteBlog(
+                          widget.blog.toMap(includeId: true),
+                        );
                         widget.onChanged.call();
                       },
                     ),
@@ -149,16 +154,47 @@ class _BlogCardState extends State<BlogCard> {
                 ],
               ),
             ),
-            if (toComment) CommentForm(),
+            if (toComment)
+              CommentForm(
+                blogId: widget.blog.id,
+                onComment: () {
+                  widget.onChanged.call();
+                  setState(() {
+                    toComment = !toComment;
+                  });
+                },
+              ),
             if (widget.blog.comments != null) ...[
               for (var comment in widget.blog.comments!)
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 10),
-                  child: Padding(
-                    padding: EdgeInsets.only(bottom: 5),
-                    child: CommentCard(comment: comment),
+                if (commentToEdit == comment.id)
+                  CommentForm(
+                    blogId: widget.blog.id,
+                    comment: comment,
+                    onComment: () => {
+                      widget.onChanged.call(),
+                      setState(() {
+                        commentToEdit = null;
+                      }),
+                    },
+                  )
+                else
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 10),
+                    child: Padding(
+                      padding: EdgeInsets.only(bottom: 5),
+                      child: CommentCard(
+                        comment: comment,
+                        onUpdate: () {
+                          setState(() {
+                            commentToEdit = comment.id;
+                          });
+                        },
+                        onDelete: () {
+                          widget.onChanged.call();
+                        },
+                      ),
+                    ),
                   ),
-                ),
             ],
           ],
         ),

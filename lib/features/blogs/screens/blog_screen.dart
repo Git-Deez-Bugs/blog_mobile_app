@@ -4,9 +4,10 @@ import 'package:blog_app_v1/features/blogs/services/blogs_service.dart';
 import 'package:flutter/material.dart';
 
 class BlogScreen extends StatefulWidget {
-  const BlogScreen({super.key, required this.blogId});
+  const BlogScreen({super.key, required this.blogId, required this.onChanged});
 
   final String blogId;
+  final VoidCallback onChanged;
 
   @override
   State<BlogScreen> createState() => _BlogScreenState();
@@ -47,7 +48,12 @@ class _BlogScreenState extends State<BlogScreen> {
 
         return Scaffold(
           appBar: AppBar(),
-          body: SingleChildScrollView(child: BlogCard(blog: blog, disablePush: true, onChanged: fetchBlog,)),
+          body: SingleChildScrollView(child: BlogCard(blog: blog, disablePush: true, onChanged: () {
+            setState(() {
+              blogFuture = fetchBlog();
+            });
+            widget.onChanged.call();
+          },)),
         );
       },
     );

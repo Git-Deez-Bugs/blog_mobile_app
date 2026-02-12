@@ -1,4 +1,5 @@
 import 'package:blog_app_v1/features/blogs/models/comment_model.dart';
+import 'package:blog_app_v1/features/profile/model/user_model.dart';
 
 class Blog {
   final String? id;
@@ -9,7 +10,7 @@ class Blog {
   final DateTime? createdAt;
 
   // joined / computed fields
-  final String? authorEmail;
+  final User? author;
   final int? commentsCount;
   final List<Comment>? comments;
   final String? signedUrl;
@@ -22,34 +23,35 @@ class Blog {
     this.content,
     this.imagePath,
     this.signedUrl,
-    this.authorEmail,
+    this.author,
     this.commentsCount,
     this.comments,
   });
 
-  factory Blog.fromMap(
-    Map<String, dynamic> map, {
+  factory Blog.fromMap({
+    required Map<String, dynamic> blog, 
     String? signedUrl,
     List<Comment>? comments,
+     required User author,
   }) {
-    final imagePath = map['blog_image_path'];
+    final imagePath = blog['blog_image_path'];
 
     return Blog(
-      id: map['blog_id'] as String,
-      authorId: map['blog_author_id'] as String,
-      title: map['blog_title'] as String,
-      content: map['blog_content'],
+      id: blog['blog_id'] as String,
+      authorId: blog['blog_author_id'] as String,
+      title: blog['blog_title'] as String,
+      content: blog['blog_content'],
       imagePath: imagePath,
-      createdAt: DateTime.parse(map['blog_created_at']),
+      createdAt: DateTime.parse(blog['blog_created_at']),
 
       //Extended Fields
-      authorEmail: map['users']?['user_email'],
+      author: author,
       commentsCount:
-          (map['comments'] is List && (map['comments'] as List).isNotEmpty)
-          ? ((map['comments'][0] is Map &&
-                    (map['comments'][0] as Map).containsKey('count'))
-                ? (map['comments'][0]['count'] as int? ?? 0)
-                : (map['comments'] as List).length)
+          (blog['comments'] is List && (blog['comments'] as List).isNotEmpty)
+          ? ((blog['comments'][0] is Map &&
+                    (blog['comments'][0] as Map).containsKey('count'))
+                ? (blog['comments'][0]['count'] as int? ?? 0)
+                : (blog['comments'] as List).length)
           : 0,
 
       comments: comments,

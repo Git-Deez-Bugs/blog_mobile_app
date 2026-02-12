@@ -25,7 +25,7 @@ class _SigninScreenState extends State<SigninScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text("Error: $error")));
+        ).showSnackBar(SnackBar(content: Text("Error: $error"), backgroundColor: Theme.of(context).colorScheme.error,));
       }
     }
   }

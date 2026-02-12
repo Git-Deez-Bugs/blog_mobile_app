@@ -37,7 +37,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return StreamBuilder<User?>(
       stream: profileService.streamUser(userId),
       builder: (context, userSnapshot) {
-        if (userSnapshot.connectionState == ConnectionState.waiting) {
+        if (!userSnapshot.hasData) {
           return Scaffold(body: LoadingSpinner());
         }
 

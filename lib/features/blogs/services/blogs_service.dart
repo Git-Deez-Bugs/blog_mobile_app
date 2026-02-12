@@ -10,20 +10,15 @@ class BlogsService {
   final AuthService authService = AuthService();
 
   // Create Blog
-  Future<void> createBlog(Blog blog, file, fileName) async {
-    final userId = authService.getCurrentUser()?.id;
+  Future<void> createBlog(Map<String, dynamic> blog, file, fileName) async {
     String? imagePath;
 
     if (file != null && fileName != null) {
       imagePath = await uploadImage(file, fileName);
+      blog['blog_image_path'] = imagePath;
     }
 
-    await supabase.from('blogs').insert({
-      'blog_title': blog.title,
-      'blog_content': blog.content,
-      'blog_author_id': userId,
-      'blog_image_path': imagePath,
-    });
+    await supabase.from('blogs').insert(blog);
   }
 
   //Read Blogs
@@ -64,7 +59,7 @@ class BlogsService {
 
       final userModel = userMap != null
           ? author.User.fromMap(
-              userMap,
+              user: userMap,
               signedUrl: userImagePath != null
                   ? signedUrls[userImagePath]
                   : null,
@@ -123,7 +118,7 @@ class BlogsService {
 
     final blogAuthor = blogAuthorMap != null
         ? author.User.fromMap(
-            blogAuthorMap,
+            user: blogAuthorMap,
             signedUrl: blogAuthorImagePath != null
                 ? signedUrls[blogAuthorImagePath]
                 : null,
@@ -138,7 +133,7 @@ class BlogsService {
 
       final commentAuthor = commentAuthorMap != null
           ? author.User.fromMap(
-              commentAuthorMap,
+              user: commentAuthorMap,
               signedUrl: commentAuthorImagePath != null
                   ? signedUrls[commentAuthorImagePath]
                   : null,
@@ -166,7 +161,7 @@ class BlogsService {
 
   //Update Blog
   Future<void> updateBlog(
-    Blog blog,
+    Map<String, dynamic> blog,
     File? file,
     String? fileName,
     String? oldImagePath,
@@ -175,28 +170,25 @@ class BlogsService {
 
     if (file != null && fileName != null) {
       imagePath = await uploadImage(file, fileName);
+      blog['blog_image_path'] = imagePath;
     }
 
     await supabase
         .from('blogs')
-        .update({
-          'blog_title': blog.title,
-          'blog_content': blog.content,
-          'blog_image_path': imagePath ?? blog.imagePath,
-        })
-        .eq('blog_id', blog.id!);
+        .update(blog)
+        .eq('blog_id', blog['blog_id']);
 
-    if ((oldImagePath != null && blog.imagePath == null) ||
+    if ((oldImagePath != null && blog['blog_image_path'] == null) ||
         (oldImagePath != null && imagePath != null)) {
       await deleteImage(oldImagePath);
     }
   }
 
   //Delete Blog
-  Future<void> deleteBlog(Blog blog) async {
-    if (blog.imagePath != null) await deleteImage(blog.imagePath);
+  Future<void> deleteBlog(Map<String, dynamic> blog) async {
+    if (blog['blog_image_path'] != null) await deleteImage(blog['blog_image_path']);
 
-    await supabase.from('blogs').delete().eq('blog_id', blog.id!);
+    await supabase.from('blogs').delete().eq('blog_id', blog['blog_id']);
   }
 
   //Get Images
@@ -227,24 +219,43 @@ class BlogsService {
     await supabase.storage.from('blog-images').remove(paths);
   }
 
+  //Create Comment
   Future<void> createComment({
-    required Comment comment,
+    required Map<String, dynamic> comment,
     File? file,
     String? fileName,
     required String blogId,
   }) async {
-    final userId = authService.getCurrentUser()?.id;
     String? imagePath;
 
     if (file != null && fileName != null) {
       imagePath = await uploadImage(file, fileName);
+      comment['comment_image_path'] = imagePath;
     }
 
-    await supabase.from('comments').insert({
-      'comment_blog_id': blogId,
-      'comment_author_id': userId,
-      'comment_text_content': comment.textContent,
-      'comment_image_path': imagePath,
-    });
+    await supabase.from('comments').insert(comment);
+  }
+
+  //Update Comment
+  Future<void> updateComment({required Map<String, dynamic> comment, File? file, String? fileName, String? oldImagePath}) async {
+    String? imagePath;
+
+    if (file != null && fileName != null) {
+      imagePath = await uploadImage(file, fileName);
+      comment['comment_image_path'] = imagePath;
+    }
+
+    await supabase.from('comments').update(comment).eq('comment_id', comment['comment_id']);
+
+    if ((oldImagePath != null && comment['comment_image_path'] == null) || (oldImagePath != null && imagePath != null)) {
+      await deleteImage(oldImagePath);
+    }
+  }
+
+  //Delete Comment
+  Future<void> deleteComment(Map<String, dynamic>  comment) async {
+    if (comment['comment_image_path'] != null) await deleteImage(comment['comment_image_path']);
+
+    await supabase.from('comments').delete().eq('comment_id', comment['comment_id']);
   }
 }

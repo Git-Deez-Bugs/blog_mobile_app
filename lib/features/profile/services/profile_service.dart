@@ -1,5 +1,4 @@
-import 'dart:io';
-
+import 'dart:typed_data';
 import 'package:blog_app_v1/core/supabase_client.dart';
 import 'package:blog_app_v1/features/auth/services/auth_service.dart';
 import 'package:blog_app_v1/features/blogs/services/blogs_service.dart';
@@ -53,7 +52,7 @@ class ProfileService {
   //Update User Profile
   Future<void> updateProfile({
     required Map<String, dynamic> user,
-    File? file,
+    Uint8List? file,
     String? fileName,
     oldImagePath,
   }) async {

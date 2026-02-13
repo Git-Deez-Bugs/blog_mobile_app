@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:blog_app_v1/components/loading_spinner.dart';
 import 'package:blog_app_v1/features/auth/services/auth_service.dart';
 import 'package:blog_app_v1/features/blogs/models/comment_model.dart';
@@ -24,7 +24,7 @@ class CommentForm extends StatefulWidget {
 
 class _CommentFormState extends State<CommentForm> {
   late final TextEditingController _textController;
-  File? _imageFile;
+  Uint8List? _imageFile;
   String? _fileName;
   String? _networkImageUrl;
   String? _oldImagePath;
@@ -51,8 +51,9 @@ class _CommentFormState extends State<CommentForm> {
     );
 
     if (image != null) {
+      final Uint8List fileBytes = await image.readAsBytes();
       setState(() {
-        _imageFile = File(image.path);
+        _imageFile = fileBytes;
         _fileName = image.name;
       });
     }
@@ -207,7 +208,7 @@ class _CommentFormState extends State<CommentForm> {
                           ClipRRect(
                             borderRadius: BorderRadius.circular(10),
                             child: _imageFile != null
-                                ? Image.file(_imageFile!)
+                                ? Image.memory(_imageFile!)
                                 : Image.network(_networkImageUrl!),
                           ),
                           Positioned(

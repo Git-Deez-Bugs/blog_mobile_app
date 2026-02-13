@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:blog_app_v1/features/blogs/models/blog_model.dart';
 import 'package:blog_app_v1/features/blogs/models/comment_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -10,7 +10,11 @@ class BlogsService {
   final AuthService authService = AuthService();
 
   // Create Blog
-  Future<void> createBlog(Map<String, dynamic> blog, file, fileName) async {
+  Future<void> createBlog({
+    required Map<String, dynamic> blog,
+    Uint8List? file,
+    String? fileName,
+  }) async {
     String? imagePath;
 
     if (file != null && fileName != null) {
@@ -162,7 +166,7 @@ class BlogsService {
   //Update Blog
   Future<void> updateBlog(
     Map<String, dynamic> blog,
-    File? file,
+    Uint8List? file,
     String? fileName,
     String? oldImagePath,
   ) async {
@@ -173,10 +177,7 @@ class BlogsService {
       blog['blog_image_path'] = imagePath;
     }
 
-    await supabase
-        .from('blogs')
-        .update(blog)
-        .eq('blog_id', blog['blog_id']);
+    await supabase.from('blogs').update(blog).eq('blog_id', blog['blog_id']);
 
     if ((oldImagePath != null && blog['blog_image_path'] == null) ||
         (oldImagePath != null && imagePath != null)) {
@@ -186,7 +187,8 @@ class BlogsService {
 
   //Delete Blog
   Future<void> deleteBlog(Map<String, dynamic> blog) async {
-    if (blog['blog_image_path'] != null) await deleteImage(blog['blog_image_path']);
+    if (blog['blog_image_path'] != null)
+      await deleteImage(blog['blog_image_path']);
 
     await supabase.from('blogs').delete().eq('blog_id', blog['blog_id']);
   }
@@ -202,12 +204,18 @@ class BlogsService {
   }
 
   //Upload Image
-  Future<String> uploadImage(File file, String fileName) async {
+  Future<String> uploadImage(Uint8List file, String fileName) async {
     final userId = authService.getCurrentUser()?.id;
 
     final String path = '$userId/${fileName}_${DateTime.now()}';
 
-    await supabase.storage.from('blog-images').upload(path, file);
+    await supabase.storage
+        .from('blog-images')
+        .uploadBinary(
+          path,
+          file,
+          fileOptions: FileOptions(contentType: 'image/*'),
+        );
 
     return path;
   }
@@ -222,7 +230,7 @@ class BlogsService {
   //Create Comment
   Future<void> createComment({
     required Map<String, dynamic> comment,
-    File? file,
+    Uint8List? file,
     String? fileName,
     required String blogId,
   }) async {
@@ -237,7 +245,12 @@ class BlogsService {
   }
 
   //Update Comment
-  Future<void> updateComment({required Map<String, dynamic> comment, File? file, String? fileName, String? oldImagePath}) async {
+  Future<void> updateComment({
+    required Map<String, dynamic> comment,
+    Uint8List? file,
+    String? fileName,
+    String? oldImagePath,
+  }) async {
     String? imagePath;
 
     if (file != null && fileName != null) {
@@ -245,17 +258,25 @@ class BlogsService {
       comment['comment_image_path'] = imagePath;
     }
 
-    await supabase.from('comments').update(comment).eq('comment_id', comment['comment_id']);
+    await supabase
+        .from('comments')
+        .update(comment)
+        .eq('comment_id', comment['comment_id']);
 
-    if ((oldImagePath != null && comment['comment_image_path'] == null) || (oldImagePath != null && imagePath != null)) {
+    if ((oldImagePath != null && comment['comment_image_path'] == null) ||
+        (oldImagePath != null && imagePath != null)) {
       await deleteImage(oldImagePath);
     }
   }
 
   //Delete Comment
-  Future<void> deleteComment(Map<String, dynamic>  comment) async {
-    if (comment['comment_image_path'] != null) await deleteImage(comment['comment_image_path']);
+  Future<void> deleteComment(Map<String, dynamic> comment) async {
+    if (comment['comment_image_path'] != null)
+      await deleteImage(comment['comment_image_path']);
 
-    await supabase.from('comments').delete().eq('comment_id', comment['comment_id']);
+    await supabase
+        .from('comments')
+        .delete()
+        .eq('comment_id', comment['comment_id']);
   }
 }

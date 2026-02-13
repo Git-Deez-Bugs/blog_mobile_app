@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:blog_app_v1/components/loading_spinner.dart';
 import 'package:blog_app_v1/features/auth/services/auth_service.dart';
 import 'package:blog_app_v1/features/blogs/models/blog_model.dart';
@@ -19,12 +19,11 @@ class _CreateBlogScreenState extends State<CreateUpdateBlogScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   late final TextEditingController _titleController;
   late final TextEditingController _contentController;
-  File? _imageFile;
+  Uint8List? _imageFile;
   String? fileName;
   String? _networkImageUrl;
   String? oldImagePath;
   String? blogId;
-  bool _removedImage = false;
   bool _isLoading = false;
 
   @override
@@ -49,11 +48,12 @@ class _CreateBlogScreenState extends State<CreateUpdateBlogScreen> {
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
 
     if (image != null) {
+      final Uint8List fileBytes = await image.readAsBytes();
+
       setState(() {
-        _imageFile = File(image.path);
+        _imageFile = fileBytes;
         fileName = image.name;
         _networkImageUrl = null;
-        _removedImage = false;
       });
     }
   }
@@ -86,7 +86,7 @@ class _CreateBlogScreenState extends State<CreateUpdateBlogScreen> {
         content: _contentController.text,
       );
 
-      await blogsService.createBlog(blog.toMap(), _imageFile, fileName);
+      await blogsService.createBlog(blog: blog.toMap(), file: _imageFile, fileName: fileName);
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text("Blog created successfully")));
@@ -130,7 +130,7 @@ class _CreateBlogScreenState extends State<CreateUpdateBlogScreen> {
         content: _contentController.text,
         imagePath: oldImagePath,
       );
-      if (_removedImage) {
+      if (oldImagePath != null && _networkImageUrl == null && _imageFile == null) {
         blog.imagePath = null;
       }
       await blogsService.updateBlog(
@@ -220,7 +220,7 @@ class _CreateBlogScreenState extends State<CreateUpdateBlogScreen> {
                           child: Stack(
                             children: [
                               _imageFile != null
-                                  ? Image.file(_imageFile!)
+                                  ? Image.memory(_imageFile!)
                                   : Image.network(
                                       _networkImageUrl!,
                                       errorBuilder:
@@ -239,7 +239,6 @@ class _CreateBlogScreenState extends State<CreateUpdateBlogScreen> {
                                       _imageFile = null;
                                       _networkImageUrl = null;
                                       fileName = null;
-                                      _removedImage = true;
                                     });
                                   },
                                   child: IconButtonTheme(

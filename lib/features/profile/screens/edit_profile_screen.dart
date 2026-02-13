@@ -1,5 +1,4 @@
-import 'dart:io';
-
+import 'dart:typed_data';
 import 'package:blog_app_v1/features/profile/model/user_model.dart';
 import 'package:blog_app_v1/features/profile/services/profile_service.dart';
 import 'package:flutter/material.dart';
@@ -15,7 +14,7 @@ class EditProfileScreen extends StatefulWidget {
 }
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
-  File? _imageFile;
+  Uint8List? _imageFile;
   String? _fileName;
   String? _networkImageUrl;
   String? _oldImagePath;
@@ -33,8 +32,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
 
     if (image != null) {
+      final Uint8List fileBytes = await image.readAsBytes();
       setState(() {
-        _imageFile = File(image.path);
+        _imageFile = fileBytes;
         _fileName = image.name;
         _networkImageUrl = null;
       });
@@ -83,7 +83,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             CircleAvatar(
               radius: 100,
               backgroundImage: _imageFile != null
-                  ? FileImage(_imageFile!)
+                  ? MemoryImage(_imageFile!)
                   : _networkImageUrl != null
                   ? NetworkImage(_networkImageUrl!)
                   : AssetImage('assets/images/user.png'),

@@ -48,12 +48,17 @@ class _BlogScreenState extends State<BlogScreen> {
 
         return Scaffold(
           appBar: AppBar(),
-          body: SingleChildScrollView(child: BlogCard(blog: blog, disablePush: true, onChanged: () {
-            setState(() {
-              blogFuture = fetchBlog();
-            });
-            widget.onChanged.call();
-          },)),
+          body: Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: 800),
+              child: SingleChildScrollView(child: BlogCard(blog: blog, disablePush: true, onChanged: () {
+                setState(() {
+                  blogFuture = fetchBlog();
+                });
+                widget.onChanged.call();
+              },)),
+            ),
+          ),
         );
       },
     );

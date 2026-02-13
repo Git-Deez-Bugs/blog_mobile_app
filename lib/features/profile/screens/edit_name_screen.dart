@@ -58,29 +58,39 @@ class _EditNameScreenState extends State<EditNameScreen> {
 
   @override
   Widget build(BuildContext context) {
+
+    final screenWidth = MediaQuery.of(context).size.width;
+    final double buttonHeight = screenWidth < 600 ? 40 : 56;
+    final double sbSize = screenWidth < 600 ? 10 : 20;
+
     return Scaffold(
       appBar: AppBar(title: Text('Update Name'), centerTitle: true),
-      body: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              TextField(
-                controller: _nameController,
-                decoration: InputDecoration(
-                  labelText: "Name",
-                  hintText: "What's your name?",
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: 600),
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  TextField(
+                    controller: _nameController,
+                    decoration: InputDecoration(
+                      labelText: "Name",
+                      hintText: "What's your name?",
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
                   ),
-                ),
+                  if (_showButton) ...[
+                    SizedBox(height: sbSize,),
+                    FilledButton(onPressed: updateName, child: Text('Update Name'), style: FilledButton.styleFrom(minimumSize: Size(double.infinity, buttonHeight)),),
+                  ]
+                ],
               ),
-              if (_showButton) ...[
-                SizedBox(height: 10,),
-                FilledButton(onPressed: updateName, child: Text('Update Name')),
-              ]
-            ],
+            ),
           ),
         ),
       ),

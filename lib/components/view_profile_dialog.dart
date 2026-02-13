@@ -8,6 +8,10 @@ class ViewProfileDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    
+    final screenWidth = MediaQuery.of(context).size.width;
+    final double avataRadius = screenWidth < 600 ? 100 : 300;
+
     return SizedBox(
       width: double.infinity,
       child: TextButton(
@@ -22,7 +26,7 @@ class ViewProfileDialog extends StatelessWidget {
                   children: [
                     Center(
                       child: CircleAvatar(
-                        radius: 100,
+                        radius: avataRadius,
                         backgroundImage: currentUser.signedUrl != null
                             ? NetworkImage(currentUser.signedUrl!)
                             : AssetImage('assets/images/user.png')

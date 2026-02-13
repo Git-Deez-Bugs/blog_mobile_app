@@ -43,6 +43,7 @@ class _BlogCardState extends State<BlogCard> {
             );
           }
         },
+        borderRadius: BorderRadius.circular(14),
         child: Column(
           children: [
             //Email, Date, and MoreOptions

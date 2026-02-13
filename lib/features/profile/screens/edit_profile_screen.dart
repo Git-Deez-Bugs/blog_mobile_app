@@ -24,6 +24,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     super.initState();
     _networkImageUrl = widget.currentUser.signedUrl;
     _oldImagePath = widget.currentUser.profilePath;
+
+    debugPrint('Initial networkImageUrl: $_networkImageUrl');
+    debugPrint('Initial oldImagePath: $_oldImagePath');
   }
 
   Future<void> pickImage() async {
@@ -48,9 +51,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         id: widget.currentUser.id,
         email: widget.currentUser.email,
         createdAt: widget.currentUser.createdAt,
-        name: widget.currentUser.name
+        name: widget.currentUser.name,
       );
-      if ((_oldImagePath != null && _networkImageUrl == null) && _imageFile == null) {
+      if ((_oldImagePath != null && _networkImageUrl == null) &&
+          _imageFile == null) {
         user.profilePath = null;
       }
       await profileService.updateProfile(
@@ -74,6 +78,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    final double avatarRadius = screenWidth < 600 ? 100 : 200;
+    final double sbSize = screenWidth < 600 ? 20 : 40;
+    final double iconSize = screenWidth < 600 ? 24 : 28;
+
     return Scaffold(
       appBar: AppBar(title: Text('Update Profile'), centerTitle: true),
       body: Center(
@@ -81,18 +91,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             CircleAvatar(
-              radius: 100,
+              radius: avatarRadius,
               backgroundImage: _imageFile != null
                   ? MemoryImage(_imageFile!)
                   : _networkImageUrl != null
                   ? NetworkImage(_networkImageUrl!)
                   : AssetImage('assets/images/user.png'),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: sbSize),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                IconButton(onPressed: pickImage, icon: Icon(Icons.add_a_photo)),
+                IconButton(
+                  onPressed: pickImage,
+                  icon: Icon(Icons.add_a_photo, size: iconSize),
+                ),
                 if (_networkImageUrl != null || _imageFile != null)
                   IconButton(
                     onPressed: () {
@@ -102,15 +115,18 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         _fileName = null;
                       });
                     },
-                    icon: Icon(Icons.delete),
+                    icon: Icon(Icons.delete, size: iconSize),
                   ),
               ],
             ),
-            if (_imageFile != null || (_oldImagePath != null && _networkImageUrl == null))
+            if (_imageFile != null ||
+                (_oldImagePath != null && _networkImageUrl == null)) ...[
+              SizedBox(height: sbSize),
               FilledButton(
                 onPressed: updateProfile,
                 child: Text('Upload Image'),
               ),
+            ],
           ],
         ),
       ),

@@ -30,6 +30,12 @@ class _HomeScreenState extends State<HomeScreen> {
     final String? userId = authService.getCurrentUser()?.id;
     ProfileService profileService = ProfileService();
 
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    final double inkResponseRadius = screenWidth < 600 ? 15 : 25;
+    final double profileRadius = screenWidth < 600 ? 15 : 25;
+    final double profilePadding = screenWidth < 600 ? 15 : 8;
+
     if (userId == null) {
       return Scaffold(body: Text('Anauthorized User'));
     }
@@ -125,15 +131,15 @@ class _HomeScreenState extends State<HomeScreen> {
             centerTitle: true,
             actions: [
               Padding(
-                padding: const EdgeInsets.all(15.0),
+                padding: EdgeInsets.all(profilePadding),
                 child: InkResponse(
-                  radius: 10,
+                  radius: inkResponseRadius,
                   onTap: () => selectedPageNotifier.value = 1,
                   child: CircleAvatar(
                     backgroundImage: currentUser.signedUrl != null
                         ? NetworkImage(currentUser.signedUrl!)
                         : AssetImage('assets/images/user.png'),
-                    radius: 15,
+                    radius: profileRadius,
                   ),
                 ),
               ),

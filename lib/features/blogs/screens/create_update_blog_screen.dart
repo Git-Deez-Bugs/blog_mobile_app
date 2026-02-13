@@ -168,6 +168,10 @@ class _CreateBlogScreenState extends State<CreateUpdateBlogScreen> {
 
   @override
   Widget build(BuildContext context) {
+
+    final screenWidth = MediaQuery.of(context).size.width;
+    final double buttonHeight = screenWidth < 600 ? 40 : 56;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.blog != null ? "Update Blog" : "Create Blog"),
@@ -175,106 +179,111 @@ class _CreateBlogScreenState extends State<CreateUpdateBlogScreen> {
       ),
       body: _isLoading
           ? LoadingSpinner()
-          : Padding(
-              padding: const EdgeInsets.all(20),
-              child: SingleChildScrollView(
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text("Title"),
-                      SizedBox(height: 10),
-                      TextFormField(
-                        controller: _titleController,
-                        decoration: InputDecoration(
-                          hintText: "Enter title",
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return "Title field is required";
-                          }
-                          return null;
-                        },
-                      ),
-                      SizedBox(height: 10),
-                      Text("Content"),
-                      SizedBox(height: 10),
-                      TextFormField(
-                        controller: _contentController,
-                        maxLines: 10,
-                        decoration: InputDecoration(
-                          hintText: "Enter content",
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                        ),
-                      ),
-                      if (_imageFile != null || _networkImageUrl != null) ...[
-                        const SizedBox(height: 10),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(14),
-                          child: Stack(
-                            children: [
-                              _imageFile != null
-                                  ? Image.memory(_imageFile!)
-                                  : Image.network(
-                                      _networkImageUrl!,
-                                      errorBuilder:
-                                          (context, error, stackTrace) =>
-                                              const Text(
-                                                'Failed to load image',
-                                              ),
-                                    ),
-
-                              Positioned(
-                                top: 6,
-                                right: 6,
-                                child: InkWell(
-                                  onTap: () {
-                                    setState(() {
-                                      _imageFile = null;
-                                      _networkImageUrl = null;
-                                      fileName = null;
-                                    });
-                                  },
-                                  child: IconButtonTheme(
-                                    data: IconButtonThemeData(),
-                                    child: Icon(Icons.cancel),
-                                  ),
-                                ),
+          : Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: 600),
+              child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: SingleChildScrollView(
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text("Title"),
+                          SizedBox(height: 10),
+                          TextFormField(
+                            controller: _titleController,
+                            decoration: InputDecoration(
+                              hintText: "Enter title",
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
                               ),
-                            ],
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return "Title field is required";
+                              }
+                              return null;
+                            },
                           ),
-                        ),
-                      ],
-                      IconButton(
-                        onPressed: pickImage,
-                        icon: Icon(Icons.add_a_photo),
+                          SizedBox(height: 10),
+                          Text("Content"),
+                          SizedBox(height: 10),
+                          TextFormField(
+                            controller: _contentController,
+                            maxLines: 10,
+                            decoration: InputDecoration(
+                              hintText: "Enter content",
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                            ),
+                          ),
+                          if (_imageFile != null || _networkImageUrl != null) ...[
+                            const SizedBox(height: 10),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(14),
+                              child: Stack(
+                                children: [
+                                  _imageFile != null
+                                      ? Image.memory(_imageFile!)
+                                      : Image.network(
+                                          _networkImageUrl!,
+                                          errorBuilder:
+                                              (context, error, stackTrace) =>
+                                                  const Text(
+                                                    'Failed to load image',
+                                                  ),
+                                        ),
+              
+                                  Positioned(
+                                    top: 6,
+                                    right: 6,
+                                    child: InkWell(
+                                      onTap: () {
+                                        setState(() {
+                                          _imageFile = null;
+                                          _networkImageUrl = null;
+                                          fileName = null;
+                                        });
+                                      },
+                                      child: IconButtonTheme(
+                                        data: IconButtonThemeData(),
+                                        child: Icon(Icons.cancel),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                          IconButton(
+                            onPressed: pickImage,
+                            icon: Icon(Icons.add_a_photo),
+                          ),
+                          FilledButton(
+                            onPressed: () {
+                              if (_formKey.currentState!.validate()) {
+                                if (widget.blog != null) {
+                                  updateBlog();
+                                } else {
+                                  createBlog();
+                                }
+                              }
+                            },
+                            style: FilledButton.styleFrom(
+                              minimumSize: Size(double.infinity, buttonHeight),
+                            ),
+                            child: Text(widget.blog != null ? "Update" : "Create"),
+                          ),
+                        ],
                       ),
-                      FilledButton(
-                        onPressed: () {
-                          if (_formKey.currentState!.validate()) {
-                            if (widget.blog != null) {
-                              updateBlog();
-                            } else {
-                              createBlog();
-                            }
-                          }
-                        },
-                        style: FilledButton.styleFrom(
-                          minimumSize: Size(double.infinity, 40),
-                        ),
-                        child: Text(widget.blog != null ? "Update" : "Create"),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
-              ),
             ),
+          ),
     );
   }
 }

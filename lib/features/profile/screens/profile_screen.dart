@@ -11,10 +11,20 @@ class ProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    final double inkResponseRadius = screenWidth < 600 ? 80 : 150;
+    final double avatarRadius = screenWidth < 600 ? 50 : 100;
+    final double iconSize = screenWidth < 600 ? 20 : 24;
+    final double nameSize = screenWidth < 600 ? 20 : 28;
+    final double emailSize = screenWidth < 600 ? 14 : 18;
+    final double sbSize = screenWidth < 600 ? 20 : 40;
+
     return Scaffold(
       body: SingleChildScrollView(
         child: Padding(
-          padding: EdgeInsets.all(20),
+          padding: EdgeInsets.all(screenWidth < 600 ? 20 : 40),
           child: Center(
             child: Column(
               children: [
@@ -49,15 +59,15 @@ class ProfileScreen extends StatelessWidget {
                       ),
                     );
                   },
-                  radius: 25,
+                  radius: inkResponseRadius,
                   child: CircleAvatar(
                     backgroundImage: currentUser.signedUrl != null
                         ? NetworkImage(currentUser.signedUrl!)
                         : AssetImage('assets/images/user.png'),
-                    radius: 50,
+                    radius: avatarRadius,
                   ),
                 ),
-                SizedBox(height: 20),
+                SizedBox(height: sbSize),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -71,13 +81,13 @@ class ProfileScreen extends StatelessWidget {
                           ),
                         );
                       },
-                      icon: Icon(Icons.edit),
+                      icon: Icon(Icons.edit, size: iconSize,),
                     ),
                     Text(
                       currentUser.name ?? 'anon user',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        fontSize: 20,
+                        fontSize: nameSize,
                       ),
                     ),
                     SizedBox(width: 50),
@@ -85,7 +95,7 @@ class ProfileScreen extends StatelessWidget {
                 ),
                 Text(
                   currentUser.email,
-                  style: TextStyle(color: Colors.blueAccent),
+                  style: TextStyle(color: Colors.blueAccent, fontSize: emailSize),
                 ),
               ],
             ),

@@ -23,7 +23,7 @@ class _BloglistScreenState extends State<BloglistScreen> {
 
   void fetchBlogs() {
     BlogsService blogService = BlogsService();
-    blogs = blogService.readBlogs(); 
+    blogs = blogService.readBlogs();
     setState(() {});
   }
 
@@ -47,47 +47,61 @@ class _BloglistScreenState extends State<BloglistScreen> {
             return const Center(child: Text('No blogs found'));
           }
 
-          return ListView.builder(
-            itemCount: blogs.length + 1,
-            itemBuilder: (context, index) {
-              if (index == 0) {
-                return Padding(
-                  padding: const EdgeInsets.all(10),
-                  child: Card(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    child: InkWell(
-                      onTap: () async {
-                        await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => CreateUpdateBlogScreen(),
+          return Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: 800),
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: blogs.length + 1,
+                padding: EdgeInsets.symmetric(vertical: 10),
+                itemBuilder: (context, index) {
+                  if (index == 0) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 5),
+                      child: Card(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        child: InkWell(
+                          onTap: () async {
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => CreateUpdateBlogScreen(),
+                              ),
+                            );
+                            fetchBlogs();
+                          },
+                          borderRadius: BorderRadius.circular(30),
+                          child: Padding(
+                            padding: const EdgeInsets.all(15),
+                            child: Row(
+                              children: [
+                                SizedBox(width: 10),
+                                Icon(Icons.edit),
+                                SizedBox(width: 10),
+                                Text("What's on your mind?"),
+                              ],
+                            ),
                           ),
-                        );
-                        fetchBlogs();
-                      },
-                      borderRadius: BorderRadius.circular(30),
-                      child: Padding(
-                        padding: const EdgeInsets.all(15),
-                        child: Row(
-                          children: [
-                            SizedBox(width: 10),
-                            Icon(Icons.edit),
-                            SizedBox(width: 10),
-                            Text("What's on your mind?"),
-                          ],
                         ),
                       ),
+                    );
+                  }
+
+                  final blog = blogs[index - 1];
+
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 5),
+                    child: BlogCard(
+                      blog: blog,
+                      disablePush: false,
+                      onChanged: fetchBlogs,
                     ),
-                  ),
-                );
-              }
-
-              final blog = blogs[index - 1];
-
-              return BlogCard(blog: blog, disablePush: false, onChanged: fetchBlogs,);
-            },
+                  );
+                },
+              ),
+            ),
           );
         },
       ),

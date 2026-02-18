@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 import 'package:blog_app_v1/features/blogs/models/blog_model.dart';
 import 'package:blog_app_v1/features/blogs/models/comment_model.dart';
+import 'package:blog_app_v1/features/blogs/models/image_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/supabase_client.dart';
 import '../../auth/services/auth_service.dart';
@@ -12,39 +13,63 @@ class BlogsService {
   // Create Blog
   Future<void> createBlog({
     required Map<String, dynamic> blog,
-    Uint8List? file,
-    String? fileName,
+    required List<Uint8List> files,
+    required List<String> fileNames,
   }) async {
-    String? imagePath;
+    final blogResponse = await supabase
+        .from('blogs')
+        .insert(blog)
+        .select()
+        .single();
 
-    if (file != null && fileName != null) {
-      imagePath = await uploadImage(file, fileName);
-      blog['blog_image_path'] = imagePath;
+    final blogId = blogResponse['blog_id'];
+    final authorId = blogResponse['blog_author_id'];
+
+    List<Map<String, dynamic>> images = [];
+
+    for (int i = 0; i < files.length; i++) {
+      final path = await uploadImage(files[i], fileNames[i]);
+
+      final image = BlogImage(
+        id: '',
+        authorId: authorId,
+        path: path,
+        blogId: blogId,
+      );
+      images.add(image.toMap());
     }
 
-    await supabase.from('blogs').insert(blog);
+    if (images.isNotEmpty) {
+      await supabase.from('images').insert(images);
+    }
   }
 
   //Read Blogs
   Future<List<Blog>> readBlogs() async {
     final data = await supabase
         .from('blogs')
-        .select('*, users(*), comments(count)')
+        .select('*, users(*), comments(count), images(*)')
         .order('blog_created_at', ascending: false);
 
     final blogs = data as List;
 
-    final blogImagePaths = blogs
-        .map((b) => b['blog_image_path'])
-        .whereType<String>()
-        .toList();
+    final List<String> allPaths = [];
 
-    final userImagePaths = blogs
-        .map((b) => b['users']?['user_profile_path'])
-        .whereType<String>()
-        .toList();
+    for (final blog in blogs) {
+      final images = blog['images'] as List;
 
-    final allPaths = [...blogImagePaths, ...userImagePaths];
+      for (final image in images) {
+        if (image['image_path'] != null) {
+          allPaths.add(image['image_path']);
+        }
+      }
+
+      final userImagePath = blog['users']?['user_profile_path'];
+
+      if (userImagePath != null) {
+        allPaths.add(userImagePath);
+      }
+    }
 
     final Map<String, String> signedUrls = {};
 
@@ -56,9 +81,7 @@ class BlogsService {
     }
 
     return blogs.map((blog) {
-      final blogImagePath = blog['blog_image_path'];
       final userMap = blog['users'];
-
       final userImagePath = userMap?['user_profile_path'];
 
       final userModel = userMap != null
@@ -70,11 +93,25 @@ class BlogsService {
             )
           : null;
 
-      return Blog.fromMap(
-        blog: blog,
-        signedUrl: blogImagePath != null ? signedUrls[blogImagePath] : null,
-        author: userModel!,
-      );
+      final images = blog['images'] as List;
+
+      final imageModels = images
+          .where(
+            (image) =>
+                image['image_path'] != null &&
+                signedUrls.containsKey(image['image_path']),
+          )
+          .map((image) {
+            final path = image['image_path'];
+            final signedUrl = signedUrls[path];
+            if (signedUrl == null) return null;
+            return BlogImage.fromMap(image: image, signedUrl: signedUrl);
+          })
+          .where((img) => img != null)
+          .cast<BlogImage>()
+          .toList();
+
+      return Blog.fromMap(blog: blog, images: imageModels, author: userModel!);
     }).toList();
   }
 
@@ -82,21 +119,25 @@ class BlogsService {
   Future<Blog> readBlog(String blogId) async {
     final data = await supabase
         .from('blogs')
-        .select('*, users(*), comments(*, users(*))')
+        .select('*, users(*), comments(*, users(*)), images(*)')
         .eq('blog_id', blogId)
         .single();
 
     final List<String> allImagePaths = [];
 
-    if (data['blog_image_path'] != null) {
-      allImagePaths.add(data['blog_image_path']);
+    final images = data['images'] as List;
+
+    for (final image in images) {
+      if (image['image_path'] != null) {
+        allImagePaths.add(image['image_path']);
+      }
     }
 
     if (data['users']?['user_profile_path'] != null) {
       allImagePaths.add(data['users']['user_profile_path']);
     }
 
-    final comments = (data['comments'] as List<dynamic>);
+    final comments = data['comments'] as List;
 
     for (final comment in comments) {
       if (comment['comment_image_path'] != null) {
@@ -153,44 +194,105 @@ class BlogsService {
       );
     }).toList();
 
+    final imageModels = images
+        .where(
+          (image) =>
+              image['image_path'] != null &&
+              signedUrls.containsKey(image['image_path']),
+        )
+        .map((image) {
+          final path = image['image_path'];
+          final signedUrl = signedUrls[path];
+          if (signedUrl == null) return null;
+          return BlogImage.fromMap(image: image, signedUrl: signedUrl);
+        })
+        .where((img) => img != null)
+        .cast<BlogImage>()
+        .toList();
+
     return Blog.fromMap(
       blog: data,
-      signedUrl: data['blog_image_path'] != null
-          ? signedUrls[data['blog_image_path']]
-          : null,
+      images: imageModels,
       comments: commentModels,
       author: blogAuthor!,
     );
   }
 
   //Update Blog
-  Future<void> updateBlog(
-    Map<String, dynamic> blog,
-    Uint8List? file,
-    String? fileName,
-    String? oldImagePath,
-  ) async {
-    String? imagePath;
-
-    if (file != null && fileName != null) {
-      imagePath = await uploadImage(file, fileName);
-      blog['blog_image_path'] = imagePath;
-    }
-
+  Future<void> updateBlog({
+    required Map<String, dynamic> blog,
+    required List<Uint8List> files,
+    required List<String> fileNames,
+    required List<BlogImage> removedImages,
+  }) async {
     await supabase.from('blogs').update(blog).eq('blog_id', blog['blog_id']);
 
-    if ((oldImagePath != null && blog['blog_image_path'] == null) ||
-        (oldImagePath != null && imagePath != null)) {
-      await deleteImage(oldImagePath);
+    final blogId = blog['blog_id'];
+    final authorId = blog['blog_author_id'];
+
+    if (files.isNotEmpty) {
+      List<Map<String, dynamic>> newImages = [];
+
+      for (int i = 0; i < files.length; i++) {
+        final path = await uploadImage(files[i], fileNames[i]);
+
+        final newImage = BlogImage(
+          id: '',
+          authorId: authorId,
+          path: path,
+          blogId: blogId,
+        );
+        newImages.add(newImage.toMap());
+      }
+
+      await supabase.from('images').insert(newImages);
+    }
+
+    if (removedImages.isNotEmpty) {
+      final paths = removedImages.map((e) => e.path).toList();
+      await deleteImage(paths);
+      await supabase.from('images').delete().inFilter('image_path', paths);
     }
   }
 
   //Delete Blog
-  Future<void> deleteBlog(Map<String, dynamic> blog) async {
-    if (blog['blog_image_path'] != null)
-      await deleteImage(blog['blog_image_path']);
+  Future<void> deleteBlog({
+    required Blog blog,
+    required bool haveComments,
+  }) async {
+    final List<String> allImagePaths = [];
 
-    await supabase.from('blogs').delete().eq('blog_id', blog['blog_id']);
+    final images = blog.images;
+    if (images != null && images.isNotEmpty) {
+      for (final image in images) {
+        allImagePaths.add(image.path);
+      }
+    }
+
+    List<dynamic> comments = [];
+
+    if (haveComments) {
+      comments = blog.comments as List<dynamic>;
+    } else {
+      final data = await supabase
+          .from('comments')
+          .select('*')
+          .eq('comment_blog_id', blog.id);
+      comments = data as List<dynamic>;
+    }
+
+    for (final comment in comments) {
+      final path = comment['comment_image_path'];
+      if (path != null) {
+        allImagePaths.add(path);
+      }
+    }
+
+    if (allImagePaths.isNotEmpty) {
+      await deleteImage(allImagePaths);
+    }
+
+    await supabase.from('blogs').delete().eq('blog_id', blog.id);
   }
 
   //Get Images
@@ -271,8 +373,9 @@ class BlogsService {
 
   //Delete Comment
   Future<void> deleteComment(Map<String, dynamic> comment) async {
-    if (comment['comment_image_path'] != null)
+    if (comment['comment_image_path'] != null) {
       await deleteImage(comment['comment_image_path']);
+    }
 
     await supabase
         .from('comments')

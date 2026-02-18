@@ -1,5 +1,6 @@
 import 'package:blog_app_v1/components/comment_card.dart';
 import 'package:blog_app_v1/components/comment_form.dart';
+import 'package:blog_app_v1/components/image_layout.dart';
 import 'package:blog_app_v1/components/more_options.dart';
 import 'package:blog_app_v1/features/auth/services/auth_service.dart';
 import 'package:blog_app_v1/features/blogs/models/blog_model.dart';
@@ -38,7 +39,10 @@ class _BlogCardState extends State<BlogCard> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => BlogScreen(blogId: widget.blog.id, onChanged: () => widget.onChanged.call(),),
+                builder: (context) => BlogScreen(
+                  blogId: widget.blog.id,
+                  onChanged: () => widget.onChanged.call(),
+                ),
               ),
             );
           }
@@ -102,7 +106,8 @@ class _BlogCardState extends State<BlogCard> {
                       onDelete: () async {
                         BlogsService blogsService = BlogsService();
                         await blogsService.deleteBlog(
-                          widget.blog.toMap(includeId: true),
+                          blog: widget.blog,
+                          haveComments: widget.disablePush
                         );
                         widget.onChanged.call();
                       },
@@ -134,9 +139,13 @@ class _BlogCardState extends State<BlogCard> {
                   ),
                 ),
               ),
-            if (widget.blog.signedUrl != null) SizedBox(height: 10),
-            if (widget.blog.signedUrl != null)
-              Image.network(widget.blog.signedUrl!),
+            //Images
+            if (widget.blog.images!.isNotEmpty) ...[
+              ImageLayout(
+                images: widget.blog.images!,
+                listView: widget.disablePush,
+              ),
+            ],
             Padding(
               padding: const EdgeInsets.all(20.0),
               child: Row(

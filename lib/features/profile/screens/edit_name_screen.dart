@@ -86,7 +86,7 @@ class _EditNameScreenState extends State<EditNameScreen> {
                   ),
                   if (_showButton) ...[
                     SizedBox(height: sbSize,),
-                    FilledButton(onPressed: updateName, child: Text('Update Name'), style: FilledButton.styleFrom(minimumSize: Size(double.infinity, buttonHeight)),),
+                    FilledButton(onPressed: updateName, style: FilledButton.styleFrom(minimumSize: Size(double.infinity, buttonHeight)), child: Text('Update Name'),),
                   ]
                 ],
               ),

@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'package:blog_app_v1/components/loading_spinner.dart';
 import 'package:blog_app_v1/features/auth/services/auth_service.dart';
 import 'package:blog_app_v1/features/blogs/models/blog_model.dart';
+import 'package:blog_app_v1/features/blogs/models/image_model.dart';
 import 'package:blog_app_v1/features/blogs/services/blogs_service.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -19,10 +20,10 @@ class _CreateBlogScreenState extends State<CreateUpdateBlogScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   late final TextEditingController _titleController;
   late final TextEditingController _contentController;
-  Uint8List? _imageFile;
-  String? fileName;
-  String? _networkImageUrl;
-  String? oldImagePath;
+  List<Uint8List> _imageFiles = [];
+  List<String> fileNames = [];
+  List<BlogImage> _networkImages = [];
+  List<BlogImage> _removedImages = [];
   String? blogId;
   bool _isLoading = false;
 
@@ -35,25 +36,28 @@ class _CreateBlogScreenState extends State<CreateUpdateBlogScreen> {
       text: widget.blog?.content ?? '',
     );
 
-    _networkImageUrl = widget.blog?.signedUrl;
-
-    oldImagePath = widget.blog?.imagePath;
+    _networkImages = widget.blog?.images ?? [];
     blogId = widget.blog?.id;
   }
 
   //Pick image
-  Future pickImage() async {
+  Future pickImages() async {
     final ImagePicker picker = ImagePicker();
 
-    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+    final List<XFile>? images = await picker.pickMultiImage();
 
-    if (image != null) {
-      final Uint8List fileBytes = await image.readAsBytes();
+    if (images != null) {
+      List<Uint8List> fileBytesList = [];
+      List<String> nameList = [];
+
+      for (final image in images) {
+        fileBytesList.add(await image.readAsBytes());
+        nameList.add(image.name);
+      }
 
       setState(() {
-        _imageFile = fileBytes;
-        fileName = image.name;
-        _networkImageUrl = null;
+        _imageFiles = [..._imageFiles, ...fileBytesList];
+        fileNames = [...fileNames, ...nameList];
       });
     }
   }
@@ -86,7 +90,11 @@ class _CreateBlogScreenState extends State<CreateUpdateBlogScreen> {
         content: _contentController.text,
       );
 
-      await blogsService.createBlog(blog: blog.toMap(), file: _imageFile, fileName: fileName);
+      await blogsService.createBlog(
+        blog: blog.toMap(),
+        files: _imageFiles,
+        fileNames: fileNames,
+      );
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text("Blog created successfully")));
@@ -128,16 +136,12 @@ class _CreateBlogScreenState extends State<CreateUpdateBlogScreen> {
         authorId: widget.blog!.authorId,
         title: _titleController.text,
         content: _contentController.text,
-        imagePath: oldImagePath,
       );
-      if (oldImagePath != null && _networkImageUrl == null && _imageFile == null) {
-        blog.imagePath = null;
-      }
       await blogsService.updateBlog(
-        blog.toMap(includeId: true),
-        _imageFile,
-        fileName,
-        oldImagePath,
+        blog: blog.toMap(includeId: true),
+        files: _imageFiles,
+        fileNames: fileNames,
+        removedImages: _removedImages,
       );
       ScaffoldMessenger.of(
         context,
@@ -168,7 +172,6 @@ class _CreateBlogScreenState extends State<CreateUpdateBlogScreen> {
 
   @override
   Widget build(BuildContext context) {
-
     final screenWidth = MediaQuery.of(context).size.width;
     final double buttonHeight = screenWidth < 600 ? 40 : 56;
 
@@ -180,9 +183,9 @@ class _CreateBlogScreenState extends State<CreateUpdateBlogScreen> {
       body: _isLoading
           ? LoadingSpinner()
           : Center(
-            child: ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: 600),
-              child: Padding(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: 600),
+                child: Padding(
                   padding: const EdgeInsets.all(20),
                   child: SingleChildScrollView(
                     child: Form(
@@ -220,46 +223,83 @@ class _CreateBlogScreenState extends State<CreateUpdateBlogScreen> {
                               ),
                             ),
                           ),
-                          if (_imageFile != null || _networkImageUrl != null) ...[
-                            const SizedBox(height: 10),
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(14),
-                              child: Stack(
-                                children: [
-                                  _imageFile != null
-                                      ? Image.memory(_imageFile!)
-                                      : Image.network(
-                                          _networkImageUrl!,
-                                          errorBuilder:
-                                              (context, error, stackTrace) =>
-                                                  const Text(
-                                                    'Failed to load image',
-                                                  ),
-                                        ),
-              
-                                  Positioned(
-                                    top: 6,
-                                    right: 6,
-                                    child: InkWell(
-                                      onTap: () {
-                                        setState(() {
-                                          _imageFile = null;
-                                          _networkImageUrl = null;
-                                          fileName = null;
-                                        });
-                                      },
-                                      child: IconButtonTheme(
-                                        data: IconButtonThemeData(),
-                                        child: Icon(Icons.cancel),
-                                      ),
+
+                          if (_imageFiles.isNotEmpty ||
+                              _networkImages.isNotEmpty) ...[
+                            SizedBox(height: 10),
+                            SizedBox(
+                              height: 500,
+                              child: GridView.builder(
+                                shrinkWrap: true,
+                                gridDelegate:
+                                    SliverGridDelegateWithFixedCrossAxisCount(
+                                      crossAxisCount: 2,
+                                      mainAxisSpacing: 10,
+                                      crossAxisSpacing: 10,
+                                      childAspectRatio: 1,
                                     ),
-                                  ),
-                                ],
+                                itemCount:
+                                    _networkImages.length + _imageFiles.length,
+                                itemBuilder: (context, index) {
+                                  final bool isNetwork =
+                                      index < _networkImages.length;
+                                  final Widget imageWidget = isNetwork
+                                      ? Image.network(
+                                          _networkImages[index].signedUrl!,
+                                          fit: BoxFit.cover,
+                                        )
+                                      : Image.memory(
+                                          _imageFiles[index -
+                                              _networkImages.length],
+                                          fit: BoxFit.cover,
+                                        );
+
+                                  return ClipRRect(
+                                    borderRadius: BorderRadius.circular(14),
+                                    child: Stack(
+                                      children: [
+                                        Positioned.fill(child: imageWidget),
+                                        Positioned(
+                                          top: 6,
+                                          right: 6,
+                                          child: InkWell(
+                                            onTap: () {
+                                              setState(() {
+                                                if (isNetwork) {
+                                                  _removedImages.add(
+                                                    _networkImages[index],
+                                                  );
+                                                  _networkImages.removeAt(
+                                                    index,
+                                                  );
+                                                } else {
+                                                  _imageFiles.removeAt(
+                                                    index -
+                                                        _networkImages.length,
+                                                  );
+                                                  fileNames.removeAt(
+                                                    index -
+                                                        _networkImages.length,
+                                                  );
+                                                }
+                                              });
+                                            },
+                                            child: Icon(
+                                              Icons.cancel,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
                               ),
                             ),
                           ],
+
                           IconButton(
-                            onPressed: pickImage,
+                            onPressed: pickImages,
                             icon: Icon(Icons.add_a_photo),
                           ),
                           FilledButton(
@@ -275,15 +315,17 @@ class _CreateBlogScreenState extends State<CreateUpdateBlogScreen> {
                             style: FilledButton.styleFrom(
                               minimumSize: Size(double.infinity, buttonHeight),
                             ),
-                            child: Text(widget.blog != null ? "Update" : "Create"),
+                            child: Text(
+                              widget.blog != null ? "Update" : "Create",
+                            ),
                           ),
                         ],
                       ),
                     ),
                   ),
                 ),
+              ),
             ),
-          ),
     );
   }
 }

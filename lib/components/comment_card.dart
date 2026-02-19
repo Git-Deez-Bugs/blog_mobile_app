@@ -2,19 +2,24 @@ import 'package:blog_app_v1/components/more_options.dart';
 import 'package:blog_app_v1/features/auth/services/auth_service.dart';
 import 'package:blog_app_v1/features/blogs/models/comment_model.dart';
 import 'package:blog_app_v1/features/blogs/services/blogs_service.dart';
+import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 
 class CommentCard extends StatelessWidget {
-  const CommentCard({super.key, required this.comment, required this.onUpdate, required this.onDelete});
+  const CommentCard({
+    super.key,
+    required this.comment,
+    required this.onUpdate,
+    required this.onDelete,
+  });
 
   final Comment comment;
   final VoidCallback onUpdate;
   final VoidCallback onDelete;
-
   Future<void> deleteComment(BuildContext context) async {
     try {
       BlogsService blogsService = BlogsService();
-      await blogsService.deleteComment(comment.toMap(includeId: true));
+      await blogsService.deleteComment(comment: comment);
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Comment deleted successfully')));
@@ -31,6 +36,8 @@ class CommentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return Card(
       color: Theme.of(context).colorScheme.surface,
       child: SizedBox(
@@ -65,19 +72,43 @@ class CommentCard extends StatelessWidget {
                   ),
                 ),
                 if (AuthService().getCurrentUser()?.id == comment.author!.id)
-                  MoreOptions(onUpdate: onUpdate, onDelete: () => deleteComment(context),),
+                  MoreOptions(
+                    onUpdate: onUpdate,
+                    onDelete: () => deleteComment(context),
+                  ),
               ],
             ),
-            if (comment.signedUrl != null) ...[
-              SizedBox(height: 10),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 15.0),
-                child: ClipRRect(
-                  borderRadius: BorderRadiusGeometry.circular(10),
-                  child: Image.network(comment.signedUrl!),
-                ),
-              ),
-            ],
+            (() {
+              final images = comment.images;
+
+              if (comment.images != null && comment.images!.isNotEmpty) {
+                return Padding(
+                  padding: const EdgeInsets.only(top: 10.0),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                    child: CarouselSlider(
+                      items: images!.map((image) {
+                        return Builder(
+                          builder: (context) {
+                            return Container(
+                              width: screenWidth < 600 ? 400 : 600,
+                              margin: EdgeInsets.symmetric(horizontal: 5),
+                              child: Image.network(image.signedUrl!, fit: BoxFit.cover,),
+                            );
+                          },
+                        );
+                      }).toList(),
+                      options: CarouselOptions(
+                        height: screenWidth < 600 ? 200 : 300,
+                        enableInfiniteScroll: false,
+                      ),
+                    ),
+                  ),
+                );
+              }
+
+              return const SizedBox.shrink();
+            })(),
             comment.textContent != null &&
                     comment.textContent!.trim().isNotEmpty
                 ? Padding(

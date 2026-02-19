@@ -173,6 +173,11 @@ class _BlogCardState extends State<BlogCard> {
                     toComment = !toComment;
                   });
                 },
+                canceUpdate: () {
+                  setState(() {
+                    toComment = false;
+                  });
+                },
               ),
             if (widget.blog.comments != null) ...[
               for (var comment in widget.blog.comments!)
@@ -185,6 +190,11 @@ class _BlogCardState extends State<BlogCard> {
                       setState(() {
                         commentToEdit = null;
                       }),
+                    },
+                    canceUpdate: () {
+                      setState(() {
+                        commentToEdit = null;
+                      });
                     },
                   )
                 else

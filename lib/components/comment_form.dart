@@ -17,7 +17,7 @@ class CommentForm extends StatefulWidget {
   });
 
   final String blogId;
-  final VoidCallback? onComment;
+  final Function(Comment comment)? onComment;
   final Comment? comment;
   final VoidCallback canceUpdate;
 
@@ -92,14 +92,14 @@ class _CommentFormState extends State<CommentForm> {
         authorId: currentUser.id,
         textContent: _textController.text,
       );
-      await blogsService.createComment(
+      final createdComment = await blogsService.createComment(
         comment: comment.toMap(),
         blogId: widget.blogId,
         files: _imageFiles,
         fileNames: _fileNames,
       );
       if (widget.onComment != null) {
-        widget.onComment!();
+        widget.onComment?.call(createdComment);
       }
       ScaffoldMessenger.of(
         context,
@@ -143,14 +143,14 @@ class _CommentFormState extends State<CommentForm> {
         authorId: widget.comment!.authorId,
         textContent: _textController.text,
       );
-      await blogsService.updateComment(
+      final updatedComment = await blogsService.updateComment(
         comment: comment.toMap(includeId: true),
         files: _imageFiles,
         fileNames: _fileNames,
         removedImages: _removedImages,
       );
       if (widget.onComment != null) {
-        widget.onComment!();
+        widget.onComment?.call(updatedComment);
       }
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Comment updated successfully')),
@@ -182,7 +182,10 @@ class _CommentFormState extends State<CommentForm> {
     final screenWidth = MediaQuery.of(context).size.width;
 
     return _isLoading
-        ? LoadingSpinner()
+        ? Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: LoadingSpinner(),
+        )
         : Padding(
             padding: const EdgeInsets.all(10.0),
             child: Card(

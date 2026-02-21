@@ -4,6 +4,7 @@ import 'package:blog_app_v1/components/image_layout.dart';
 import 'package:blog_app_v1/components/more_options.dart';
 import 'package:blog_app_v1/features/auth/services/auth_service.dart';
 import 'package:blog_app_v1/features/blogs/models/blog_model.dart';
+import 'package:blog_app_v1/features/blogs/models/comment_model.dart';
 import 'package:blog_app_v1/features/blogs/screens/blog_screen.dart';
 import 'package:blog_app_v1/features/blogs/screens/create_update_blog_screen.dart';
 import 'package:blog_app_v1/features/blogs/services/blogs_service.dart';
@@ -16,11 +17,15 @@ class BlogCard extends StatefulWidget {
     required this.blog,
     required this.disablePush,
     required this.onChanged,
+    required this.onUpdate,
+    required this.onDelete,
   });
 
   final Blog blog;
   final bool disablePush;
   final VoidCallback onChanged;
+  final Function(Blog blog) onUpdate;
+  final Function(String blogId) onDelete;
 
   @override
   State<BlogCard> createState() => _BlogCardState();
@@ -29,19 +34,32 @@ class BlogCard extends StatefulWidget {
 class _BlogCardState extends State<BlogCard> {
   bool toComment = false;
   String? commentToEdit;
+  late List<Comment> _comments;
+  late int _commentsCount;
+
+  @override
+  void initState() {
+    super.initState();
+    _comments = List.from(widget.blog.comments ?? []);
+    _commentsCount = widget.blog.commentsCount ?? _comments.length;
+  }
 
   @override
   Widget build(BuildContext context) {
     return Card(
       child: InkWell(
-        onTap: () {
+        onTap: () async {
           if (!widget.disablePush) {
-            Navigator.push(
+            await Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (context) => BlogScreen(
                   blogId: widget.blog.id,
-                  onChanged: () => widget.onChanged.call(),
+                  onChanged: () {
+                    widget.onChanged.call();
+                  },
+                  onUpdate: widget.onUpdate,
+                  onDelete: widget.onDelete,
                 ),
               ),
             );
@@ -90,26 +108,35 @@ class _BlogCardState extends State<BlogCard> {
                       ],
                     ),
                   ),
+                  //MoreOptions
                   if (AuthService().getCurrentUser()?.id ==
                       widget.blog.authorId)
                     MoreOptions(
                       onUpdate: () async {
-                        await Navigator.push(
+                        final updatedBlog = await Navigator.push<Blog>(
                           context,
                           MaterialPageRoute(
                             builder: (context) =>
                                 CreateUpdateBlogScreen(blog: widget.blog),
                           ),
                         );
-                        widget.onChanged.call();
+                        if (updatedBlog != null) {
+                          widget.onUpdate(updatedBlog);
+                        }
                       },
                       onDelete: () async {
                         BlogsService blogsService = BlogsService();
                         await blogsService.deleteBlog(
                           blog: widget.blog,
-                          haveComments: widget.disablePush
+                          haveComments: widget.disablePush,
                         );
-                        widget.onChanged.call();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Blog Deleted Successfully')),
+                        );
+                        widget.onDelete(widget.blog.id);
+                        if (widget.disablePush) {
+                          Navigator.pop(context);
+                        }
                       },
                     ),
                 ],
@@ -141,6 +168,7 @@ class _BlogCardState extends State<BlogCard> {
               ),
             //Images
             if (widget.blog.images!.isNotEmpty) ...[
+              SizedBox(height: 15),
               ImageLayout(
                 images: widget.blog.images!,
                 listView: widget.disablePush,
@@ -150,7 +178,7 @@ class _BlogCardState extends State<BlogCard> {
               padding: const EdgeInsets.all(20.0),
               child: Row(
                 children: [
-                  Text(widget.blog.commentsCount.toString()),
+                  Text(_commentsCount.toString()),
                   SizedBox(width: 10),
                   widget.disablePush
                       ? IconButton(
@@ -167,11 +195,13 @@ class _BlogCardState extends State<BlogCard> {
             if (toComment)
               CommentForm(
                 blogId: widget.blog.id,
-                onComment: () {
-                  widget.onChanged.call();
+                onComment: (comment) {
                   setState(() {
-                    toComment = !toComment;
+                    _comments.insert(0, comment);
+                    _commentsCount++;
+                    toComment = false;
                   });
+                  widget.onChanged();
                 },
                 canceUpdate: () {
                   setState(() {
@@ -179,17 +209,21 @@ class _BlogCardState extends State<BlogCard> {
                   });
                 },
               ),
-            if (widget.blog.comments != null) ...[
-              for (var comment in widget.blog.comments!)
+            if (_comments.isNotEmpty) ...[
+              for (var comment in _comments)
                 if (commentToEdit == comment.id)
                   CommentForm(
                     blogId: widget.blog.id,
                     comment: comment,
-                    onComment: () => {
-                      widget.onChanged.call(),
+                    onComment: (updated) {
                       setState(() {
+                        final index = _comments.indexWhere(
+                          (c) => c.id == updated.id,
+                        );
+                        if (index != -1) _comments[index] = updated;
                         commentToEdit = null;
-                      }),
+                      });
+                      widget.onChanged();
                     },
                     canceUpdate: () {
                       setState(() {
@@ -203,6 +237,7 @@ class _BlogCardState extends State<BlogCard> {
                     child: Padding(
                       padding: EdgeInsets.only(bottom: 5),
                       child: CommentCard(
+                        key: ValueKey(comment.id),
                         comment: comment,
                         onUpdate: () {
                           setState(() {
@@ -210,7 +245,11 @@ class _BlogCardState extends State<BlogCard> {
                           });
                         },
                         onDelete: () {
-                          widget.onChanged.call();
+                          setState(() {
+                            _comments.removeWhere((c) => c.id == comment.id);
+                            _commentsCount--;
+                          });
+                          widget.onChanged();
                         },
                       ),
                     ),

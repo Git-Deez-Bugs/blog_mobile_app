@@ -90,7 +90,7 @@ class _CreateBlogScreenState extends State<CreateUpdateBlogScreen> {
         content: _contentController.text,
       );
 
-      await blogsService.createBlog(
+      final newBlog = await blogsService.createBlog(
         blog: blog.toMap(),
         files: _imageFiles,
         fileNames: fileNames,
@@ -98,7 +98,7 @@ class _CreateBlogScreenState extends State<CreateUpdateBlogScreen> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text("Blog created successfully")));
-      Navigator.pop(context);
+      Navigator.pop(context, newBlog);
     } catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -137,7 +137,7 @@ class _CreateBlogScreenState extends State<CreateUpdateBlogScreen> {
         title: _titleController.text,
         content: _contentController.text,
       );
-      await blogsService.updateBlog(
+      final updatedBlog = await blogsService.updateBlog(
         blog: blog.toMap(includeId: true),
         files: _imageFiles,
         fileNames: fileNames,
@@ -146,7 +146,7 @@ class _CreateBlogScreenState extends State<CreateUpdateBlogScreen> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text("Blog updated successfully")));
-      Navigator.pop(context);
+      Navigator.pop(context, updatedBlog);
     } catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

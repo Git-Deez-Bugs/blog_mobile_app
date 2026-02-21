@@ -186,7 +186,9 @@ class BlogsService {
       allImagePaths.add(data['users']['user_profile_path']);
     }
 
-    final comments = data['comments'] as List;
+    final comments = (data['comments'] as List)
+        ..sort((c1, c2) => DateTime.parse(c1['comment_created_at']).compareTo(DateTime.parse(c2['comment_created_at'])));
+
 
     for (final comment in comments) {
       for (final image in comment['images']) {

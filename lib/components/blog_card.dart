@@ -40,7 +40,7 @@ class _BlogCardState extends State<BlogCard> {
   @override
   void initState() {
     super.initState();
-    _comments = List.from(widget.blog.comments ?? []);
+    _comments = List.from(widget.blog.comments?.reversed ?? []);
     _commentsCount = widget.blog.commentsCount ?? _comments.length;
   }
 
@@ -154,8 +154,8 @@ class _BlogCardState extends State<BlogCard> {
                 ),
               ),
             ),
-            if (widget.blog.content != null) SizedBox(height: 10),
-            if (widget.blog.content != null)
+            if (widget.blog.content != null && widget.blog.content!.isNotEmpty) ...[
+              SizedBox(height: 10),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: SizedBox(
@@ -166,6 +166,7 @@ class _BlogCardState extends State<BlogCard> {
                   ),
                 ),
               ),
+            ],
             //Images
             if (widget.blog.images!.isNotEmpty) ...[
               SizedBox(height: 15),

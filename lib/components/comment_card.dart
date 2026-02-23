@@ -74,7 +74,35 @@ class CommentCard extends StatelessWidget {
                 if (AuthService().getCurrentUser()?.id == comment.author!.id)
                   MoreOptions(
                     onUpdate: onUpdate,
-                    onDelete: () => deleteComment(context),
+                    onDelete: () async {
+                      final confirm = await showDialog(
+                        context: context,
+                        builder: (context) {
+                          return AlertDialog(
+                            title: Text('Delete Comment'),
+                            content: Text(
+                              'Are you sure you want to delete this comment?',
+                            ),
+                            actions: [
+                              ElevatedButton(
+                                onPressed: () {
+                                  Navigator.pop(context, false);
+                                },
+                                child: Text("Cancel"),
+                              ),
+                              FilledButton(
+                                onPressed: () {
+                                  Navigator.pop(context, true);
+                                },
+                                child: Text("Delete"),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                      if (confirm != true) return;
+                      deleteComment(context);
+                    },
                   ),
               ],
             ),
@@ -93,7 +121,10 @@ class CommentCard extends StatelessWidget {
                             return Container(
                               width: screenWidth < 600 ? 400 : 600,
                               margin: EdgeInsets.symmetric(horizontal: 5),
-                              child: Image.network(image.signedUrl!, fit: BoxFit.cover,),
+                              child: Image.network(
+                                image.signedUrl!,
+                                fit: BoxFit.cover,
+                              ),
                             );
                           },
                         );

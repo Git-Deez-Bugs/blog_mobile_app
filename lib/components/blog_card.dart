@@ -125,6 +125,32 @@ class _BlogCardState extends State<BlogCard> {
                         }
                       },
                       onDelete: () async {
+                        final confirm = await showDialog<bool>(
+                          context: context,
+                          builder: (context) {
+                            return AlertDialog(
+                              title: Text('Delete Blog'),
+                              content: Text(
+                                'Are you sure you want to delete this blog?',
+                              ),
+                              actions: [
+                                ElevatedButton(
+                                  onPressed: () {
+                                    Navigator.pop(context, false);
+                                  },
+                                  child: Text("Cancel"),
+                                ),
+                                FilledButton(
+                                  onPressed: () async {
+                                    Navigator.pop(context, true);
+                                  },
+                                  child: Text("Delete"),
+                                ),
+                              ],
+                            );
+                          },
+                        );
+                        if (confirm != true) return;
                         BlogsService blogsService = BlogsService();
                         await blogsService.deleteBlog(
                           blog: widget.blog,
@@ -154,7 +180,8 @@ class _BlogCardState extends State<BlogCard> {
                 ),
               ),
             ),
-            if (widget.blog.content != null && widget.blog.content!.isNotEmpty) ...[
+            if (widget.blog.content != null &&
+                widget.blog.content!.isNotEmpty) ...[
               SizedBox(height: 10),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),

@@ -95,11 +95,12 @@ class BlogsService {
   }
 
   //Read Blogs
-  Future<List<Blog>> readBlogs() async {
+  Future<List<Blog>> readBlogs({required int limit, required int offset}) async {
     final data = await supabase
         .from('blogs')
         .select('*, users(*), comments(count), images(*)')
-        .order('blog_created_at', ascending: false);
+        .order('blog_created_at', ascending: false)
+        .range(offset, offset + limit - 1);
 
     final blogs = data as List;
 

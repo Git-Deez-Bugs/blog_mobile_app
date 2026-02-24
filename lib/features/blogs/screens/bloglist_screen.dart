@@ -126,7 +126,7 @@ class _BloglistScreenState extends State<BloglistScreen> {
                         ),
                       );
                     } else {
-                      return _isLoadingMore ? Center(child: LoadingSpinner()) : SizedBox(height: 100, child: Center(child: Text('You\'ve reached the end of the list')),);
+                      return _isLoadingMore ? SizedBox(height: 100, child: Center(child: LoadingSpinner())) : SizedBox(height: 100, child: Center(child: Text('You\'ve reached the end of the list')));
                     }
                   },
                 ),

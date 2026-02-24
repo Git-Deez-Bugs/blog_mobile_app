@@ -4,6 +4,7 @@ import 'package:blog_app_v1/features/blogs/models/comment_model.dart';
 import 'package:blog_app_v1/features/blogs/services/blogs_service.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class CommentCard extends StatelessWidget {
   const CommentCard({
@@ -45,8 +46,6 @@ class CommentCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (AuthService().getCurrentUser()?.id != comment.author!.id)
-              SizedBox(height: 15),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -63,9 +62,15 @@ class CommentCard extends StatelessWidget {
                           radius: 15,
                         ),
                         SizedBox(width: 10),
-                        Text(
-                          comment.author?.name ?? comment.author!.email,
-                          style: TextStyle(fontWeight: FontWeight.bold),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              comment.author?.name ?? comment.author!.email,
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            if (comment.createdAt != null) Text(DateFormat('MMM d, yyyy').format(comment.createdAt!), style: TextStyle(color: Colors.blueGrey, ),)
+                          ],
                         ),
                       ],
                     ),

@@ -120,9 +120,9 @@ class _BloglistScreenState extends State<BloglistScreen> {
                           key: ValueKey(blog.id),
                           blog: blog,
                           disablePush: false,
-                          onChanged: fetchBlogs,
                           onUpdate: updateBlog,
                           onDelete: deleteBlog,
+                          onChanged: fetchBlogs,
                         ),
                       );
                     } else {

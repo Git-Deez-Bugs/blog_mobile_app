@@ -30,7 +30,7 @@ class _CommentFormState extends State<CommentForm> {
   List<Uint8List> _imageFiles = [];
   List<String> _fileNames = [];
   List<BlogImage> _networkImages = [];
-  List<BlogImage> _removedImages = [];
+  final List<BlogImage> _removedImages = [];
   late final String _blogId;
   bool _isLoading = false;
 
@@ -48,7 +48,7 @@ class _CommentFormState extends State<CommentForm> {
   }
 
   Future<void> pickImage() async {
-    final List<XFile>? images = await ImagePicker().pickMultiImage();
+    final List<XFile> images = await ImagePicker().pickMultiImage();
 
     if (images != null) {
       List<Uint8List> fileBytes = [];

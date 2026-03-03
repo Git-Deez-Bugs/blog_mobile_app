@@ -55,7 +55,7 @@ class BlogsService {
       allImagePaths.add(newBlog['users']?['user_profile_path']);
     }
 
-    final newImages = newBlog['images'] as List;
+    final newImages = (newBlog['images'] as List?) ?? [];
 
     for (final image in newImages) {
       allImagePaths.add(image['image_path']);
@@ -77,6 +77,16 @@ class BlogsService {
       signedUrl: signedUrls[authorProfilePath],
     );
 
+    // final List<BlogImage> imgModels = [];
+
+    // for (final image in newImages) {
+    //   final path = image['image_path'];
+    //   final signedUrl = signedUrls[path];
+    //   if (signedUrl != null) {
+    //     imgModels.add(BlogImage.fromMap(image: image, signedUrl: signedUrl));
+    //   }
+    // }
+
     final imageModels = newImages
         .map((image) {
           final path = image['image_path'];
@@ -95,14 +105,17 @@ class BlogsService {
   }
 
   //Read Blogs
-  Future<List<Blog>> readBlogs({required int limit, required int offset}) async {
+  Future<List<Blog>> readBlogs({
+    required int limit,
+    required int offset,
+  }) async {
     final data = await supabase
         .from('blogs')
         .select('*, users(*), comments(count), images(*)')
         .order('blog_created_at', ascending: false)
         .range(offset, offset + limit - 1);
 
-    final blogs = data as List;
+    final blogs = (data as List?) ?? [];
 
     final List<String> allPaths = [];
 
@@ -175,7 +188,7 @@ class BlogsService {
 
     final List<String> allImagePaths = [];
 
-    final images = data['images'] as List;
+    final images = (data['images'] as List?) ?? [];
 
     for (final image in images) {
       if (image['image_path'] != null) {
@@ -188,8 +201,11 @@ class BlogsService {
     }
 
     final comments = (data['comments'] as List)
-        ..sort((c1, c2) => DateTime.parse(c1['comment_created_at']).compareTo(DateTime.parse(c2['comment_created_at'])));
-
+      ..sort(
+        (c1, c2) => DateTime.parse(
+          c1['comment_created_at'],
+        ).compareTo(DateTime.parse(c2['comment_created_at'])),
+      );
 
     for (final comment in comments) {
       for (final image in comment['images']) {

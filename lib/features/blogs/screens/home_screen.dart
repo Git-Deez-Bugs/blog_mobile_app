@@ -47,7 +47,7 @@ class _HomeScreenState extends State<HomeScreen> {
           return Scaffold(body: LoadingSpinner());
         }
 
-        final currentUser = userSnapshot.data!;
+        final User currentUser = userSnapshot.data!;
         final List<Widget> pages = [
           BloglistScreen(),
           ProfileScreen(currentUser: currentUser),

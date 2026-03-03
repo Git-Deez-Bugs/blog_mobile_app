@@ -20,10 +20,10 @@ class _CreateBlogScreenState extends State<CreateUpdateBlogScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   late final TextEditingController _titleController;
   late final TextEditingController _contentController;
-  List<Uint8List> _imageFiles = [];
+  final List<Uint8List> _imageFiles = [];
   List<String> fileNames = [];
   List<BlogImage> _networkImages = [];
-  List<BlogImage> _removedImages = [];
+  final List<BlogImage> _removedImages = [];
   String? blogId;
   bool _isLoading = false;
 
@@ -44,7 +44,7 @@ class _CreateBlogScreenState extends State<CreateUpdateBlogScreen> {
   Future pickImages() async {
     final ImagePicker picker = ImagePicker();
 
-    final List<XFile>? images = await picker.pickMultiImage();
+    final List<XFile> images = await picker.pickMultiImage();
 
     if (images != null) {
       List<Uint8List> fileBytesList = [];
@@ -56,8 +56,8 @@ class _CreateBlogScreenState extends State<CreateUpdateBlogScreen> {
       }
 
       setState(() {
-        _imageFiles = [..._imageFiles, ...fileBytesList];
-        fileNames = [...fileNames, ...nameList];
+        _imageFiles.addAll(fileBytesList);
+        fileNames.addAll(nameList);
       });
     }
   }
@@ -230,7 +230,6 @@ class _CreateBlogScreenState extends State<CreateUpdateBlogScreen> {
                             SizedBox(
                               height: 500,
                               child: GridView.builder(
-                                shrinkWrap: true,
                                 gridDelegate:
                                     SliverGridDelegateWithFixedCrossAxisCount(
                                       crossAxisCount: 2,

@@ -59,7 +59,10 @@ class _BlogScreenState extends State<BlogScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(),
+      appBar: AppBar(
+        title: ConstrainedBox(constraints: BoxConstraints(maxWidth: 400), child: Text('${_blog?.title}', maxLines: 1, overflow: TextOverflow.ellipsis,)),
+        centerTitle: true,
+      ),
       body: _blog == null
           ? Center(child: Text('No blog found'))
           : Center(
